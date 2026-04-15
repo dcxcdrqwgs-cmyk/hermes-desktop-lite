@@ -1,0 +1,108 @@
+{
+  "app": {
+    "title": "Hermes",
+    "agent": "hermes-agent",
+    "newChat": "新建对话",
+    "settings": "设置"
+  },
+  "nav": {
+    "chat": "对话",
+    "memory": "记忆",
+    "skills": "技能",
+    "tasks": "任务",
+    "history": "历史对话"
+  },
+  "chat": {
+    "placeholder": "输入消息... (@文件 / $技能 / /命令)",
+    "send": "发送",
+    "emptyTitle": "Let's build",
+    "emptySubtitle": "Hermes agent 已就绪",
+    "quickBuild": "Build a game",
+    "quickAnalyze": "Analyze PDF",
+    "quickSprint": "Sprint planning"
+  },
+  "memory": {
+    "title": "记忆",
+    "compact": "整合",
+    "compacting": "整合中...",
+    "add": "添加",
+    "search": "搜索记忆...",
+    "hot": "🔥 热",
+    "warm": "🌡️ 温",
+    "cold": "❄️ 冷",
+    "edit": "编辑",
+    "delete": "删除",
+    "source": {
+      "对话": "📝 对话",
+      "手动": "✋ 手动",
+      "配置": "⚙️ 配置",
+      "skills": "🛠️ 技能"
+    },
+    "noMemory": "无记忆",
+    "noResult": "无匹配结果",
+    "loading": "加载中...",
+    "accessCount": "访问 {count} 次"
+  },
+  "skills": {
+    "title": "技能",
+    "installed": "已安装",
+    "market": "市场",
+    "search": "搜索已安装技能...",
+    "searchMarket": "搜索 agentskills.io 市场...",
+    "featured": "高频推荐",
+    "optional": "可选收录",
+    "enable": "启用",
+    "disable": "禁用",
+    "enabled": "已启用",
+    "disabled": "已禁用",
+    "detail": "详情",
+    "install": "安装",
+    "noResult": "无结果",
+    "marketSource": "agentskills.io"
+  },
+  "tasks": {
+    "title": "任务",
+    "newTask": "新建任务",
+    "filter": {
+      "all": "全部",
+      "in_progress": "🟡 进行中",
+      "completed": "🟢 已完成",
+      "expired": "🔴 已过期"
+    },
+    "form": {
+      "title": "任务标题（必填）",
+      "description": "任务描述（可选）",
+      "dueDate": "截止日期（可选）"
+    },
+    "cancel": "取消",
+    "create": "创建",
+    "noTasks": "暂无任务"
+  },
+  "settings": {
+    "title": "设置",
+    "appearance": "外观",
+    "light": "浅色",
+    "dark": "深色",
+    "system": "系统",
+    "language": "语言",
+    "agent": "当前 Agent",
+    "connection": "连接状态",
+    "connected": "Hermes Gateway · 127.0.0.1:8642",
+    "api": "HTTP SSE",
+    "model": "模型",
+    "version": "Hermes Desktop Lite v0.1.0",
+    "save": "保存",
+    "saving": "保存中...",
+    "cancel": "取消"
+  },
+  "input": {
+    "file": "文件",
+    "command": "命令",
+    "skill": "技能"
+  },
+  "time": {
+    "today": "今天",
+    "yesterday": "昨天",
+    "thisWeek": "本周"
+  }
+}

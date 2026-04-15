@@ -1,0 +1,108 @@
+{
+  "app": {
+    "title": "Hermes",
+    "agent": "hermes-agent",
+    "newChat": "New Chat",
+    "settings": "Settings"
+  },
+  "nav": {
+    "chat": "Chat",
+    "memory": "Memory",
+    "skills": "Skills",
+    "tasks": "Tasks",
+    "history": "History"
+  },
+  "chat": {
+    "placeholder": "Type a message... (@file / $skill / /command)",
+    "send": "Send",
+    "emptyTitle": "Let's build",
+    "emptySubtitle": "Hermes agent is ready",
+    "quickBuild": "Build a game",
+    "quickAnalyze": "Analyze PDF",
+    "quickSprint": "Sprint planning"
+  },
+  "memory": {
+    "title": "Memory",
+    "compact": "Compact",
+    "compacting": "Compacting...",
+    "add": "Add",
+    "search": "Search memories...",
+    "hot": "🔥 Hot",
+    "warm": "🌡️ Warm",
+    "cold": "❄️ Cold",
+    "edit": "Edit",
+    "delete": "Delete",
+    "source": {
+      "对话": "📝 Chat",
+      "手动": "✋ Manual",
+      "配置": "⚙️ Config",
+      "skills": "🛠️ Skills"
+    },
+    "noMemory": "No memories",
+    "noResult": "No results",
+    "loading": "Loading...",
+    "accessCount": "Accessed {count} times"
+  },
+  "skills": {
+    "title": "Skills",
+    "installed": "Installed",
+    "market": "Market",
+    "search": "Search installed skills...",
+    "searchMarket": "Search agentskills.io market...",
+    "featured": "Featured",
+    "optional": "Optional",
+    "enable": "Enable",
+    "disable": "Disable",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "detail": "Details",
+    "install": "Install",
+    "noResult": "No results",
+    "marketSource": "agentskills.io"
+  },
+  "tasks": {
+    "title": "Tasks",
+    "newTask": "New Task",
+    "filter": {
+      "all": "All",
+      "in_progress": "🟡 In Progress",
+      "completed": "🟢 Completed",
+      "expired": "🔴 Expired"
+    },
+    "form": {
+      "title": "Task title (required)",
+      "description": "Task description (optional)",
+      "dueDate": "Due date (optional)"
+    },
+    "cancel": "Cancel",
+    "create": "Create",
+    "noTasks": "No tasks yet"
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "language": "Language",
+    "agent": "Current Agent",
+    "connection": "Connection",
+    "connected": "Hermes Gateway · 127.0.0.1:8642",
+    "api": "HTTP SSE",
+    "model": "Model",
+    "version": "Hermes Desktop Lite v0.1.0",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel"
+  },
+  "input": {
+    "file": "File",
+    "command": "Command",
+    "skill": "Skill"
+  },
+  "time": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This Week"
+  }
+}

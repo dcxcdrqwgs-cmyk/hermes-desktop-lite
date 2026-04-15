@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hermes Desktop Lite</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root, [data-theme="dark"] {
+      --bg: #0a0a0a; --bg-header: #0d0d0d; --bg-sidebar: #111111;
+      --bg-card: #111; --bg-card-hover: #161616;
+      --bg-input: #111; --bg-btn: #1a1a1a; --bg-btn-hover: #222;
+      --border: #1e1e1e; --border-btn: #2a2a2a; --border-focus: #444;
+      --text: #e5e5e5; --text-muted: #888; --text-dim: #666; --text-faint: #444;
+      --text-card: #ccc; --text-hint: #333;
+      --nav-active-bg: #1e1e1e; --nav-hover-bg: #1a1a1a;
+      --thread-hover: #161616;
+      --send-bg: #e5e5e5; --send-color: #0a0a0a; --send-hover: #fff;
+      --scrollbar: #333;
+      --logo1: #e5e5e5; --logo2: #555; --logo3: #333;
+    }
+    [data-theme="light"] {
+      --bg: #f9fafb; --bg-header: #fff; --bg-sidebar: #f3f4f6;
+      --bg-card: #fff; --bg-card-hover: #f9fafb;
+      --bg-input: #fff; --bg-btn: #f3f4f6; --bg-btn-hover: #e5e7eb;
+      --border: #e5e7eb; --border-btn: #d1d5db; --border-focus: #9ca3af;
+      --text: #111827; --text-muted: #6b7280; --text-dim: #9ca3af; --text-faint: #d1d5db;
+      --text-card: #374151; --text-hint: #9ca3af;
+      --nav-active-bg: #e5e7eb; --nav-hover-bg: #f3f4f6;
+      --thread-hover: #f3f4f6;
+      --send-bg: #111827; --send-color: #fff; --send-hover: #374151;
+      --scrollbar: #d1d5db;
+      --logo1: #111827; --logo2: #6b7280; --logo3: #d1d5db;
+    }
+
+    * { font-family: 'Inter', system-ui, sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    body { background: var(--bg); color: var(--text); transition: background 0.2s, color 0.2s; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
+
+    .sidebar { background: var(--bg-sidebar); border-right: 1px solid var(--border); }
+    .nav-item { color: var(--text-muted); transition: all 0.15s; }
+    .nav-item:hover { color: var(--text); background: var(--nav-hover-bg); }
+    .nav-item.active { color: var(--text); background: var(--nav-active-bg); }
+    .thread-item { color: var(--text-dim); font-size: 13px; transition: all 0.15s; }
+    .thread-item:hover { color: var(--text-muted); background: var(--thread-hover); }
+
+    .main-bg { background: var(--bg); }
+
+    .task-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: all 0.15s;
+      cursor: pointer;
+    }
+    .task-card:hover { border-color: var(--border-focus); background: var(--bg-card-hover); }
+
+    .input-box {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      transition: border-color 0.15s;
+    }
+    .input-box:focus-within { border-color: var(--border-focus); }
+    textarea { background: transparent; color: var(--text); resize: none; outline: none; }
+    textarea::placeholder { color: var(--text-faint); }
+
+    .badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+    .badge-blue { background: #0d1f3c; color: #4d9fff; border: 1px solid #1a3a6e; }
+    .badge-purple { background: #1a0d3c; color: #a78bfa; border: 1px solid #2d1a6e; }
+    .badge-amber { background: #2a1a00; color: #f59e0b; border: 1px solid #4a3000; }
+    .badge-green { background: #0a2a1a; color: #34d399; border: 1px solid #0f4a2a; }
+    .badge-rose { background: #2a0d0d; color: #f87171; border: 1px solid #4a1a1a; }
+    .badge-cyan { background: #0a2a2a; color: #22d3ee; border: 1px solid #0f4a4a; }
+    [data-theme="light"] .badge-blue { background: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }
+    [data-theme="light"] .badge-purple { background: #ede9fe; color: #7c3aed; border-color: #ddd6fe; }
+    [data-theme="light"] .badge-amber { background: #fef3c7; color: #d97706; border-color: #fde68a; }
+    [data-theme="light"] .badge-green { background: #d1fae5; color: #059669; border-color: #a7f3d0; }
+    [data-theme="light"] .badge-rose { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
+    [data-theme="light"] .badge-cyan { background: #cffafe; color: #0891b2; border-color: #a5f3fc; }
+
+    .send-btn { background: var(--send-bg); color: var(--send-color); border-radius: 6px; transition: background 0.15s; }
+    .send-btn:hover { background: var(--send-hover); }
+
+    .new-chat-btn { background: var(--bg-btn); border: 1px solid var(--border-btn); color: var(--text-muted); transition: all 0.15s; }
+    .new-chat-btn:hover { background: var(--bg-btn-hover); color: var(--text); border-color: var(--border-focus); }
+
+    .agent-btn { background: var(--bg-btn); border: 1px solid var(--border-btn); color: var(--text-muted); font-size: 13px; transition: all 0.15s; }
+    .agent-btn:hover { background: var(--bg-btn-hover); color: var(--text); }
+
+    .icon-btn { color: var(--text-dim); transition: all 0.15s; border-radius: 6px; padding: 6px; }
+    .icon-btn:hover { color: var(--text-muted); background: var(--nav-hover-bg); }
+
+    .divider { border-color: var(--border); }
+    .section-label { color: var(--text-faint); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+    .logo-dot { width: 8px; height: 8px; border-radius: 50%; }
+    kbd { background: var(--bg-btn); border: 1px solid var(--border-btn); color: var(--text-dim); font-size: 11px; padding: 1px 6px; border-radius: 4px; font-family: inherit; }
+
+    .header-bg { background: var(--bg-header); border-bottom: 1px solid var(--border); }
+    .header-text { color: var(--text); }
+    .agent-label { color: var(--text-faint); }
+    .thread-date { color: var(--text-hint); }
+    .thread-arrow { color: var(--text-hint); }
+    .card-title { color: var(--text-card); }
+    .card-sub { color: var(--text-faint); }
+    .card-arrow { stroke: var(--text-faint); }
+    .hint-text { color: var(--text-hint); }
+    .toast { background: var(--bg-card); border: 1px solid var(--border-btn); color: var(--text-muted); }
+    .width-btn { color: var(--text-dim); background: transparent; transition: all 0.15s; }
+    .width-btn:hover { color: var(--text-muted); background: var(--nav-hover-bg); }
+    .width-btn.active { color: var(--text); background: var(--nav-active-bg); }
+
+    .page-title { color: var(--text); }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+  <!-- TopBar -->
+  <header class="header-bg h-12 flex items-center justify-between px-4 z-50 flex-shrink-0">
+    <!-- Left: Logo -->
+    <div class="flex items-center gap-2.5">
+      <div class="flex items-center gap-1.5">
+        <div class="logo-dot"></div>
+        <div class="logo-dot" style="background:#555"></div>
+        <div class="logo-dot" style="background:#333"></div>
+      </div>
+      <span class="font-semibold text-[#e5e5e5] text-sm tracking-tight">Hermes</span>
+    </div>
+
+    <!-- Center: Agent Switcher -->
+    <div class="flex items-center gap-2">
+      <span class="text-xs text-[#444]">agent</span>
+      <button class="agent-btn flex items-center gap-1.5 px-2.5 py-1 rounded-md mono">
+        main
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+    </div>
+
+    <!-- Right -->
+    <div class="flex items-center gap-1">
+      <button class="icon-btn" id="themeToggle" title="切换主题" onclick="toggleTheme()">
+        <svg id="iconDark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg id="iconLight" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+      <button class="icon-btn" title="Language">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      </button>
+      <button class="icon-btn" title="Settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Layout -->
+  <div class="flex flex-1 overflow-hidden">
+
+    <!-- Left Sidebar -->
+    <aside class="sidebar w-56 flex flex-col flex-shrink-0">
+
+      <!-- Nav -->
+      <nav class="p-2 space-y-0.5 pt-3">
+        <a href="#" class="nav-item active flex items-center gap-2.5 px-3 py-2 rounded-md text-sm">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>对话</span>
+        </a>
+        <a href="#" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-md text-sm">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.14"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.14"/></svg>
+          <span>记忆</span>
+        </a>
+        <a href="#" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-md text-sm">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span>技能</span>
+        </a>
+        <a href="#" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-md text-sm">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span>任务</span>
+        </a>
+      </nav>
+
+      <div class="mx-3 mt-2 border-t divider"></div>
+
+      <!-- Threads -->
+      <div class="flex-1 overflow-y-auto p-2 pt-3">
+        <div class="flex items-center justify-between px-3 mb-2">
+          <span class="section-label">历史对话</span>
+        </div>
+
+        <div class="mb-4">
+          <div class="px-3 py-1 text-[11px] text-[#333] mono">今天</div>
+          <a href="#" class="thread-item flex items-center gap-2 px-3 py-1.5 rounded-md">
+            <span class="text-[#333]">›</span>
+            <span class="truncate">项目报告生成</span>
+          </a>
+          <a href="#" class="thread-item flex items-center gap-2 px-3 py-1.5 rounded-md">
+            <span class="text-[#333]">›</span>
+            <span class="truncate">SQL 查询优化</span>
+          </a>
+        </div>
+
+        <div class="mb-4">
+          <div class="px-3 py-1 text-[11px] text-[#333] mono">昨天</div>
+          <a href="#" class="thread-item flex items-center gap-2 px-3 py-1.5 rounded-md">
+            <span class="text-[#333]">›</span>
+            <span class="truncate">会议纪要整理</span>
+          </a>
+        </div>
+
+        <div class="mb-4">
+          <div class="px-3 py-1 text-[11px] text-[#333] mono">本周</div>
+          <a href="#" class="thread-item flex items-center gap-2 px-3 py-1.5 rounded-md">
+            <span class="text-[#333]">›</span>
+            <span class="truncate">代码审查</span>
+          </a>
+          <a href="#" class="thread-item flex items-center gap-2 px-3 py-1.5 rounded-md">
+            <span class="text-[#333]">›</span>
+            <span class="truncate">技术方案讨论</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Sidebar Footer -->
+      <div class="p-3 border-t divider">
+        <button class="new-chat-btn w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          新建对话
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-bg flex-1 flex flex-col overflow-hidden relative">
+
+      <!-- Width Switcher (floating) -->
+      <div class="absolute top-3 right-3 z-10 flex items-center gap-0.5 border border-[var(--border)] rounded-md overflow-hidden" style="background:var(--bg-btn)">
+        <button onclick="setWidth(60)" id="w60" class="width-btn px-2 py-1 text-[11px] mono active" title="60%">60</button>
+        <button onclick="setWidth(80)" id="w80" class="width-btn px-2 py-1 text-[11px] mono" title="80%">80</button>
+        <button onclick="setWidth(90)" id="w90" class="width-btn px-2 py-1 text-[11px] mono" title="90%">90</button>
+      </div>
+
+      <!-- Content Header -->
+      <div class="pt-10 pb-6 flex items-center gap-3 max-w-3xl mx-auto w-full px-4 content-width">
+        <h1 class="text-2xl font-semibold text-[#e5e5e5] tracking-tight">Let's build</h1>
+        <button class="agent-btn flex items-center gap-1.5 px-2.5 py-1 rounded-md text-sm">
+          DailySpace
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
+
+      <!-- Task Cards -->
+      <div class="flex-1 overflow-y-auto pb-6">
+        <div class="grid grid-cols-3 gap-3 max-w-3xl mx-auto px-4 content-width">
+
+          <div class="task-card p-4" onclick="fillInput('Build a classic Snake game in this repo.')">
+            <div class="flex items-start justify-between mb-3">
+              <span class="badge badge-blue">游戏</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </div>
+            <p class="text-sm text-[#ccc] font-medium leading-snug">Build a classic Snake game</p>
+            <p class="text-xs text-[#444] mt-1 mono">HTML5 + Canvas</p>
+          </div>
+
+          <div class="task-card p-4" onclick="fillInput('Analyze this PDF and extract key insights.')">
+            <div class="flex items-start justify-between mb-3">
+              <span class="badge badge-purple">PDF</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </div>
+            <p class="text-sm text-[#ccc] font-medium leading-snug">Analyze this PDF</p>
+            <p class="text-xs text-[#444] mt-1 mono">Extract key insights</p>
+          </div>
+
+          <div class="task-card p-4" onclick="fillInput('Create a sprint planning document.')">
+            <div class="flex items-start justify-between mb-3">
+              <span class="badge badge-amber">计划</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </div>
+            <p class="text-sm text-[#ccc] font-medium leading-snug">Create a sprint planning</p>
+            <p class="text-xs text-[#444] mt-1 mono">For Q2 2026</p>
+          </div>
+
+          <div class="task-card p-4" onclick="fillInput('Optimize these SQL queries for better performance.')">
+            <div class="flex items-start justify-between mb-3">
+              <span class="badge badge-green">数据库</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </div>
+            <p class="text-sm text-[#ccc] font-medium leading-snug">Optimize SQL queries</p>
+            <p class="text-xs text-[#444] mt-1 mono">Performance tuning</p>
+          </div>
+
+          <div class="task-card p-4" onclick="fillInput('Review the latest pull requests.')">
+            <div class="flex items-start justify-between mb-3">
+              <span class="badge badge-rose">代码审查</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </div>
+            <p class="text-sm text-[#ccc] font-medium leading-snug">Review pull requests</p>
+            <p class="text-xs text-[#444] mt-1 mono">Latest changes</p>
+          </div>
+
+          <div class="task-card p-4" onclick="fillInput('Generate meeting notes from the transcript.')">
+            <div class="flex items-start justify-between mb-3">
+              <span class="badge badge-cyan">会议</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </div>
+            <p class="text-sm text-[#ccc] font-medium leading-snug">Meeting notes generator</p>
+            <p class="text-xs text-[#444] mt-1 mono">From transcript</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="pb-6">
+        <div class="max-w-3xl mx-auto px-4 content-width">
+
+          <!-- Toast -->
+          <div id="alertToast" class="mb-3 px-3 py-2 rounded-md bg-[#111] border border-[#2a2a2a] text-[#888] text-xs hidden mono">
+            <span id="alertText">已填充到输入框</span>
+          </div>
+
+          <!-- Input Box -->
+          <div class="input-box px-4 py-3">
+            <div class="flex items-end gap-3">
+              <!-- Left tools -->
+              <div class="flex items-center gap-0.5">
+                <button class="icon-btn" title="添加附件">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <button class="icon-btn" title="选择模型">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                </button>
+                <button class="icon-btn" title="上下文">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                </button>
+              </div>
+
+              <!-- Textarea -->
+              <textarea
+                id="chatInput"
+                rows="1"
+                class="flex-1 text-sm max-h-32 mono"
+                placeholder="输入消息... (@文件 / $技能 / /命令)"
+                oninput="autoResize(this)"
+              ></textarea>
+
+              <!-- Send -->
+              <button onclick="sendMessage()" class="send-btn p-2 flex-shrink-0">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Hints -->
+          <div class="flex items-center gap-4 mt-2 px-1">
+            <span class="text-xs text-[#333]"><kbd>@</kbd> 文件</span>
+            <span class="text-xs text-[#333]"><kbd>/</kbd> 命令</span>
+            <span class="text-xs text-[#333]"><kbd>$</kbd> 技能</span>
+            <span class="text-xs text-[#333]"><kbd>↵</kbd> 发送</span>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    function setWidth(pct) {
+      const maxW = pct === 90 ? '90%' : pct === 80 ? '80%' : '60%';
+      document.querySelectorAll('.content-width').forEach(el => el.style.maxWidth = maxW);
+      document.querySelectorAll('.width-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('w' + pct).classList.add('active');
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = html.getAttribute('data-theme') === 'dark';
+      html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      document.getElementById('iconDark').style.display = isDark ? 'none' : '';
+      document.getElementById('iconLight').style.display = isDark ? '' : 'none';
+    }
+
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 128) + 'px';
+    }
+
+    function showToast(msg, color) {
+      const toast = document.getElementById('alertToast');
+      const text = document.getElementById('alertText');
+      text.textContent = msg;
+      toast.style.color = color || '#888';
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 2000);
+    }
+
+    function fillInput(text) {
+      const input = document.getElementById('chatInput');
+      input.value = text;
+      input.focus();
+      autoResize(input);
+      showToast('已填充到输入框');
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('chatInput');
+      if (!input.value.trim()) return;
+      showToast('消息已发送 (Demo)', '#4d9fff');
+      input.value = '';
+      autoResize(input);
+    }
+
+    document.getElementById('chatInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+</html>
