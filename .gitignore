@@ -43,3 +43,6 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Local docs kept outside repository history
+doc/
