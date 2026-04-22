@@ -1,270 +1,463 @@
-import { useState, useRef, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { PaperclipIcon, SendIcon, SquareIcon } from 'lucide-react'
-import { Popup } from '../Popup'
-import { COMMANDS, SKILLS } from '../data'
-import { open } from '@tauri-apps/plugin-dialog'
-export function InputArea({ value, onChange, onSend, loading }) {
+import { useCallback, useEffect, useMemo, useRef } from "react"
+import { open } from "@tauri-apps/plugin-dialog"
+import {
+  FileIcon,
+  ImageIcon,
+  Loader2Icon,
+  PaperclipIcon,
+  SendHorizontalIcon,
+  SlashIcon,
+  SparklesIcon,
+  XIcon,
+} from "lucide-react"
+
+import { Popup } from "@/Popup"
+import { importAttachmentFromPath, savePastedAttachment } from "@/api"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { COMMANDS, SKILLS } from "@/data"
+import { useI18n } from "@/i18n"
+import { cn } from "@/lib/utils"
+
+function getActiveToken(value) {
+  const match = value.match(/(?:^|\s)([/$][^\s]*)$/)
+  if (!match) return null
+
+  const token = match[1]
+  if (token.startsWith("/")) {
+    return { type: "cmd", raw: token, query: token.slice(1) }
+  }
+
+  if (token.startsWith("$")) {
+    return { type: "skill", raw: token, query: token.slice(1) }
+  }
+
+  return null
+}
+
+function inferExtensionFromMime(mimeType) {
+  switch (mimeType) {
+    case "image/png":
+      return "png"
+    case "image/jpeg":
+      return "jpg"
+    case "image/webp":
+      return "webp"
+    case "image/gif":
+      return "gif"
+    default:
+      return "bin"
+  }
+}
+
+function uint8ArrayToBase64(bytes) {
+  let binary = ""
+  const chunkSize = 0x8000
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    const chunk = bytes.subarray(index, index + chunkSize)
+    binary += String.fromCharCode(...chunk)
+  }
+  return btoa(binary)
+}
+
+function decodeClipboardFilePath(value) {
+  if (!value) return null
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  if (trimmed.startsWith("file://")) {
+    return decodeURIComponent(trimmed.replace(/^file:\/\//, ""))
+  }
+  if (trimmed.startsWith("/")) {
+    return trimmed
+  }
+  return null
+}
+
+function fileNameFromPath(path) {
+  const normalized = String(path || "").replaceAll("\\", "/")
+  return normalized.split("/").pop() || normalized
+}
+
+function mergeAttachments(current, nextItems) {
+  const seen = new Set(current.map((item) => item.path))
+  const merged = [...current]
+
+  for (const item of nextItems) {
+    if (!item?.path || seen.has(item.path)) continue
+    seen.add(item.path)
+    merged.push(item)
+  }
+
+  return merged
+}
+
+export function InputArea({
+  value,
+  onChange,
+  onSend,
+  attachments = [],
+  onAttachmentsChange,
+  loading,
+  embedded = false,
+  workspacePath = null,
+  wideLayout = false,
+}) {
+  const { lang, t } = useI18n()
   const textareaRef = useRef(null)
-  const [isFocused, setIsFocused] = useState(false)
-  const [popup, setPopup] = useState(null)
+  const activeToken = useMemo(() => getActiveToken(value), [value])
+  const composerMaxWidth = wideLayout ? "68rem" : "58rem"
+
+  const getItemDescription = useCallback(
+    (item) => (lang === "en" ? item.desc_en || item.desc_zh : item.desc_zh || item.desc_en),
+    [lang]
+  )
 
   const adjustHeight = useCallback(() => {
-    const ta = textareaRef.current
-    if (ta) {
-      ta.style.height = 'auto'
-      ta.style.height = Math.min(ta.scrollHeight, 160) + 'px'
-    }
+    const textarea = textareaRef.current
+    if (!textarea) return
+    textarea.style.height = "auto"
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`
   }, [])
 
-  const handleInput = (e) => {
-    const v = e.target.value
-    onChange(v)
+  useEffect(() => {
     adjustHeight()
-    // 同步 popup 状态：根据输入内容决定是否显示命令/技能弹窗
-    if (v.endsWith('/') || v.endsWith('$')) {
-      setPopup(v.endsWith('/') ? 'cmd' : 'skill')
-    } else if (v.includes('/') || v.includes('$')) {
-      setPopup(v.includes('/') ? 'cmd' : 'skill')
-    } else {
-      setPopup(null)
-    }
-  }
+  }, [adjustHeight, value])
 
-  // popupQuery 直接从 value 推导（始终与输入同步）
-  let popupQuery = ''
-  if (popup === 'cmd' && value.includes('/')) {
-    popupQuery = value.slice(value.lastIndexOf('/') + 1)
-  } else if (popup === 'skill' && value.includes('$')) {
-    popupQuery = value.slice(value.lastIndexOf('$') + 1)
-  }
-
-  const handleKeyDown = (e) => {
-    if (popup) {
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        // 关闭弹窗：删除命令/技能触发符及其参数（保留触发符前的文本）
-        if (popup === 'cmd') {
-          const slashIdx = value.lastIndexOf('/')
-          const newVal = slashIdx >= 0 ? value.slice(0, slashIdx) : value
-          onChange(newVal)
-          setPopup(null)
-        } else if (popup === 'skill') {
-          const dollarIdx = value.lastIndexOf('$')
-          const newVal = dollarIdx >= 0 ? value.slice(0, dollarIdx) : value
-          onChange(newVal)
-          setPopup(null)
-        }
+  const replaceActiveToken = useCallback(
+    (replacement) => {
+      if (!activeToken) {
+        onChange(replacement)
         return
       }
-      if (e.key === 'Enter') {
-        e.preventDefault()
-        // Enter 由 Popup 内部的搜索框处理选择，这里不干预
+
+      const tokenIndex = value.lastIndexOf(activeToken.raw)
+      if (tokenIndex < 0) {
+        onChange(value)
         return
+      }
+
+      const nextValue = `${value.slice(0, tokenIndex)}${replacement}`
+      onChange(nextValue)
+    },
+    [activeToken, onChange, value]
+  )
+
+  const closePopup = useCallback(() => {
+    replaceActiveToken("")
+    requestAnimationFrame(() => textareaRef.current?.focus())
+  }, [replaceActiveToken])
+
+  const handleInput = (event) => {
+    onChange(event.target.value)
+    adjustHeight()
+  }
+
+  const handleKeyDown = (event) => {
+    if (activeToken) {
+      if (event.key === "Escape") {
+        event.preventDefault()
+        closePopup()
       }
       return
     }
-    // 弹窗关闭时的正常输入行为
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
+
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault()
       if (!loading && value.trim()) {
         onSend()
-        if (textareaRef.current) textareaRef.current.style.height = 'auto'
+        if (textareaRef.current) {
+          textareaRef.current.style.height = "auto"
+        }
       }
     }
   }
 
+  const handleQueryChange = (query) => {
+    if (!activeToken) return
+    const prefix = activeToken.type === "cmd" ? "/" : "$"
+    replaceActiveToken(`${prefix}${query}`)
+  }
+
   const selectCmd = (item) => {
-    const slashIdx = value.lastIndexOf('/')
-    // 保留触发符及之前的内容，替换为命令 + 空格
-    const prefix = slashIdx >= 0 ? value.slice(0, slashIdx + 1) : ''
-    onChange(prefix + item.cmd + ' ')
-    setPopup(null) // 关闭弹窗
+    replaceActiveToken(`${item.cmd} `)
+    requestAnimationFrame(() => textareaRef.current?.focus())
   }
 
   const selectSkill = (item) => {
-    const dollarIdx = value.lastIndexOf('$')
-    const prefix = dollarIdx >= 0 ? value.slice(0, dollarIdx + 1) : ''
-    onChange(prefix + '$' + item.name + ' ')
-    setPopup(null) // 关闭弹窗
-  }
-
-  // Popup 搜索框输入变化时更新 value（保留触发符，替换查询部分）
-  const handleQueryChange = (newQuery) => {
-    if (popup === 'cmd') {
-      const slashIdx = value.lastIndexOf('/')
-      const prefix = slashIdx >= 0 ? value.slice(0, slashIdx + 1) : '/'
-      onChange(prefix + newQuery)
-    } else if (popup === 'skill') {
-      const dollarIdx = value.lastIndexOf('$')
-      const prefix = dollarIdx >= 0 ? value.slice(0, dollarIdx + 1) : '$'
-      onChange(prefix + newQuery)
-    }
+    replaceActiveToken(`$${item.name} `)
+    requestAnimationFrame(() => textareaRef.current?.focus())
   }
 
   const handleFileAttach = async () => {
     try {
-      const path = await open({ multiple: false, directory: false })
-      if (!path) return
-      const fname = path.split('/').pop()
-      onChange(value + `[文件: ${fname}] `)
-    } catch (e) { console.error(e) }
+      const result = await open({ multiple: true, directory: false })
+      const paths = Array.isArray(result) ? result : result ? [result] : []
+      if (paths.length === 0) return
+
+      onAttachmentsChange?.(
+        mergeAttachments(
+          attachments,
+          await Promise.all(
+            paths.map(async (path) => {
+              const saved = await importAttachmentFromPath(workspacePath, path)
+              return {
+                path: saved.path,
+                name: fileNameFromPath(saved.path),
+                kind: "file",
+              }
+            })
+          )
+        )
+      )
+      requestAnimationFrame(() => textareaRef.current?.focus())
+    } catch (error) {
+      console.error(error)
+    }
   }
 
-  const canSend = !loading && value.trim().length > 0
+  const handlePaste = async (event) => {
+    const clipboard = event.clipboardData
+    if (!clipboard) return
+
+    const uriList = clipboard.getData("text/uri-list")
+    const plainText = clipboard.getData("text/plain")
+    const pastedPaths = `${uriList}\n${plainText}`
+      .split("\n")
+      .map((item) => decodeClipboardFilePath(item))
+      .filter(Boolean)
+
+    if (pastedPaths.length > 0) {
+      event.preventDefault()
+      onAttachmentsChange?.(
+        mergeAttachments(
+          attachments,
+          await Promise.all(
+            pastedPaths.map(async (path) => {
+              const saved = await importAttachmentFromPath(workspacePath, path)
+              return {
+                path: saved.path,
+                name: fileNameFromPath(saved.path),
+                kind: "file",
+              }
+            })
+          )
+        )
+      )
+      requestAnimationFrame(() => textareaRef.current?.focus())
+      return
+    }
+
+    const files = Array.from(clipboard.files || [])
+    if (files.length === 0) return
+
+    event.preventDefault()
+
+    try {
+      const nextAttachments = []
+
+      for (const [index, file] of files.entries()) {
+        const arrayBuffer = await file.arrayBuffer()
+        const bytes = new Uint8Array(arrayBuffer)
+        const dataBase64 = uint8ArrayToBase64(bytes)
+        const fileName =
+          file.name || `pasted-file-${index + 1}.${inferExtensionFromMime(file.type)}`
+        const saved = await savePastedAttachment(
+          workspacePath,
+          fileName,
+          dataBase64,
+          file.type.startsWith("image/")
+        )
+        nextAttachments.push({
+          path: saved.path,
+          name: fileNameFromPath(saved.path),
+          kind: file.type.startsWith("image/") ? "image" : "file",
+        })
+      }
+
+      onAttachmentsChange?.(mergeAttachments(attachments, nextAttachments))
+      requestAnimationFrame(() => textareaRef.current?.focus())
+    } catch (error) {
+      console.error("Failed to paste attachment:", error)
+    }
+  }
+
+  const removeAttachment = (path) => {
+    onAttachmentsChange?.(attachments.filter((item) => item.path !== path))
+    requestAnimationFrame(() => textareaRef.current?.focus())
+  }
+
+  const canSend = !loading && (value.trim().length > 0 || attachments.length > 0)
 
   return (
-    <div className="px-4 pb-4">
+    <div
+      data-chat-input-width="true"
+      style={{ maxWidth: composerMaxWidth }}
+      className={cn(
+        "mx-auto w-full transition-[max-width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+        "max-w-full"
+      )}>
       <div
         className={cn(
-          "mx-auto overflow-visible relative bg-card border rounded-2xl transition-all duration-200",
-          isFocused
-            ? "border-ring shadow-[0_0_0_3px_var(--color-ring)/20,0_8px_32px_rgba(0,0,0,0.15)]"
-            : "border-border shadow-sm dark:shadow-black/30"
+          "app-input-shell relative overflow-visible rounded-[1.05rem]",
+          embedded ? "px-1 py-1" : "p-1"
+        )}>
+        {activeToken?.type === "cmd" && (
+          <Popup
+            items={COMMANDS}
+            onSelect={selectCmd}
+            onClose={closePopup}
+            query={activeToken.query}
+            onQueryChange={handleQueryChange}
+            filterFn={(item, query) =>
+              !query ||
+              item.cmd.toLowerCase().includes(query.toLowerCase()) ||
+              item.desc_zh?.includes(query) ||
+              item.desc_en?.toLowerCase().includes(query.toLowerCase())
+            }
+            renderItem={(item) => (
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="text-sm font-medium text-foreground">
+                    {getItemDescription(item)}
+                  </div>
+                  <div className="mono text-[11px] text-muted-foreground">
+                    {item.alias || "Command"}
+                  </div>
+                </div>
+                <Badge variant="outline" className="mono rounded-full px-2.5 py-1 text-[10px]">
+                  {item.cmd}
+                </Badge>
+              </div>
+            )}
+          />
         )}
-        style={{
-          maxWidth: '860px',
-        }}
-      >
 
-        {/* Popup: commands */}
-        {/* Popup: commands */}
-        <AnimatePresence>
-          {popup === 'cmd' && (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.15 }}
-              className="px-3 pt-3">
-              <Popup
-                items={COMMANDS}
-                onSelect={selectCmd}
-                onClose={() => {}}
-                query={popupQuery}
-                onQueryChange={handleQueryChange}
-                filterFn={(item, q) =>
-                  !q ||
-                  item.cmd.toLowerCase().includes(q.toLowerCase()) ||
-                  (item.desc_zh && item.desc_zh.includes(q)) ||
-                  (item.desc_en && item.desc_en.toLowerCase().includes(q.toLowerCase()))
-                }
-                renderItem={item => (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-foreground">{item.desc_zh || item.desc_en}</span>
-                    <span className="mono text-xs text-muted-foreground">{item.cmd}</span>
+        {activeToken?.type === "skill" && (
+          <Popup
+            items={SKILLS}
+            onSelect={selectSkill}
+            onClose={closePopup}
+            query={activeToken.query}
+            onQueryChange={handleQueryChange}
+            filterFn={(item, query) =>
+              !query ||
+              item.name.toLowerCase().includes(query.toLowerCase()) ||
+              item.desc_zh?.includes(query) ||
+              item.desc_en?.toLowerCase().includes(query.toLowerCase()) ||
+              item.category?.toLowerCase().includes(query.toLowerCase())
+            }
+            renderItem={(item) => (
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="mono text-sm font-medium text-foreground">${item.name}</div>
+                  <div className="text-xs leading-5 text-muted-foreground">
+                    {getItemDescription(item)}
                   </div>
-                )}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+                </div>
+                <Badge variant="secondary" className="mono rounded-full px-2.5 py-1 text-[10px]">
+                  {item.category}
+                </Badge>
+              </div>
+            )}
+          />
+        )}
 
-        {/* Popup: skills */}
-        <AnimatePresence>
-          {popup === 'skill' && (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.15 }}
-              className="px-3 pt-3">
-              <Popup
-                items={SKILLS}
-                onSelect={selectSkill}
-                onClose={() => {}}
-                query={popupQuery}
-                onQueryChange={handleQueryChange}
-                filterFn={(item, q) =>
-                  !q ||
-                  item.name.includes(q) ||
-                  (item.desc_zh && item.desc_zh.includes(q)) ||
-                  (item.desc_en && item.desc_en.toLowerCase().includes(q.toLowerCase())) ||
-                  item.category.includes(q)
-                }
-                renderItem={item => (
-                  <div className="flex items-center gap-3">
-                    <span className="mono text-sm font-medium text-foreground">{item.name}</span>
-                    <span className="text-xs text-muted-foreground">{item.desc_zh}</span>
-                    <span className="mono text-[10px] px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground">{item.category}</span>
+        {attachments.length > 0 && (
+          <div className="flex flex-wrap gap-2 px-3.5 pt-3">
+            {attachments.map((attachment) => {
+              const Icon = attachment.kind === "image" ? ImageIcon : FileIcon
+              return (
+                <div
+                  key={attachment.path}
+                  className="app-panel flex max-w-full items-start gap-2 rounded-[0.95rem] border-border/74 px-3 py-2">
+                  <Icon className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <div className="min-w-0">
+                    <p className="text-[12px] font-medium text-foreground">{attachment.name}</p>
+                    <p className="mono truncate text-[10px] text-muted-foreground" title={attachment.path}>
+                      {attachment.path}
+                    </p>
                   </div>
-                )}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="ml-1 shrink-0 rounded-xl"
+                    onClick={() => removeAttachment(attachment.path)}
+                    title={t("input.removeAttachment")}
+                    aria-label={t("input.removeAttachment")}>
+                    <XIcon className="size-3.5" />
+                  </Button>
+                </div>
+              )
+            })}
+          </div>
+        )}
 
-        {/* Textarea */}
-        <div className="flex items-end px-4 pt-3 pb-1">
-          <textarea
+        <div className="px-3.5 pt-2.5">
+          <Textarea
             ref={textareaRef}
             value={value}
             onChange={handleInput}
             onKeyDown={handleKeyDown}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setTimeout(() => setIsFocused(false), 150)}
+            onPaste={(event) => {
+              void handlePaste(event)
+            }}
             disabled={loading}
             rows={1}
-            placeholder="输入消息，发送给你的 Agent..."
-            className="flex-1 resize-none bg-transparent text-sm leading-relaxed outline-none text-foreground placeholder:text-muted-foreground"
-            style={{ maxHeight: '160px' }}
+            placeholder={t("input.placeholder")}
+            className={cn(
+              "min-h-[58px] resize-none border-0 bg-transparent px-0 py-0 text-[14px] leading-6 shadow-none focus-visible:ring-0",
+              "placeholder:text-muted-foreground"
+            )}
           />
         </div>
 
-        {/* Toolbar */}
-        <div className="flex items-center justify-between px-4 pb-3">
-          <div className="flex items-center gap-3">
+        <div className="app-input-footer flex flex-col gap-2 px-3.5 py-2.5 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="ghost"
               size="icon-sm"
               onClick={handleFileAttach}
-              className="text-muted-foreground hover:text-foreground"
-              title="添加文件"
-            >
-              <PaperclipIcon width={15} height={15} />
+              className="rounded-[0.9rem] text-muted-foreground hover:bg-accent hover:text-foreground"
+              title={t("input.attachFile")}>
+              <PaperclipIcon className="size-4" />
             </Button>
 
-            {/* Hint badges */}
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] px-2 py-0.5 rounded font-medium bg-primary/15 text-primary">
-                / 命令
-              </span>
-              <span className="text-[11px] px-2 py-0.5 rounded font-medium bg-purple-500/15 text-purple-500">
-                $ 技能
-              </span>
-            </div>
+            <Badge
+              variant="outline"
+              className="app-chip rounded-full px-2.5 py-0.5 text-[11px] text-muted-foreground">
+              <SlashIcon className="size-3.5" />
+              {t("input.commandChip")}
+            </Badge>
+            <Badge
+              variant="outline"
+              className="app-chip rounded-full px-2.5 py-0.5 text-[11px] text-muted-foreground">
+              <SparklesIcon className="size-3.5" />
+              {t("input.skillChip")}
+            </Badge>
           </div>
 
-          {loading ? (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={onSend}
-              className="gap-1.5"
-            >
-              <SquareIcon width={12} height={12} fill="currentColor" />
-              <span>停止</span>
-            </Button>
-          ) : (
-            <Button
-              onClick={onSend}
-              disabled={!canSend}
-              size="sm"
-              className="gap-1.5"
-            >
-              <SendIcon width={14} height={14} />
-              <span>发送</span>
-            </Button>
-          )}
-        </div>
+          <div className="flex items-center justify-between gap-3">
+            <span className="mono hidden text-[11px] text-muted-foreground md:inline">
+              {t("input.sendHint")}
+            </span>
 
-        {/* Hint */}
-        <div className="px-4 pb-2.5 text-center">
-          <span className="mono text-[10px] text-muted-foreground">
-            Enter 发送 · Shift+Enter 换行 · / 命令 · $ 技能
-          </span>
+            {loading ? (
+              <Button disabled className="h-10 rounded-[0.95rem] px-4">
+                <Loader2Icon className="size-4 animate-spin" />
+                {t("input.responding")}
+              </Button>
+            ) : (
+              <Button
+                onClick={onSend}
+                disabled={!canSend}
+                className="h-10 rounded-[0.95rem] px-4">
+                <SendHorizontalIcon className="size-4" />
+                {t("input.send")}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>

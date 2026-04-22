@@ -1,293 +1,256 @@
-import { useState, useEffect } from 'react'
-import { getMemories, addMemory, updateMemory, deleteMemory, compactMemories } from './api'
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { FileTextIcon, RefreshCwIcon } from "lucide-react"
+import { toast } from "sonner"
 
-const IMPORTANCE_CONFIG = {
-  hot:  { label: '🔥 热', color: '#ef4444', bg: 'rgba(239,68,68,0.1)',  border: 'rgba(239,68,68,0.3)' },
-  warm: { label: '🌡️ 温', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)' },
-  cold: { label: '❄️ 冷', color: '#6b7280', bg: 'rgba(107,114,128,0.1)', border: 'rgba(107,114,128,0.3)' },
+import { getLogs } from "@/api"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { ViewFrame } from "@/components/view-frame"
+import { useI18n } from "@/i18n"
+import { cn } from "@/lib/utils"
+
+const FILES = ["agent", "errors", "gateway"]
+const LEVELS = ["ALL", "DEBUG", "INFO", "WARNING", "ERROR"]
+const COMPONENTS = ["all", "gateway", "agent", "tools", "cli", "cron"]
+const LINE_COUNTS = [50, 100, 200, 500]
+
+function classifyLine(line) {
+  const upper = String(line || "").toUpperCase()
+  if (upper.includes("ERROR") || upper.includes("CRITICAL") || upper.includes("FATAL")) {
+    return "error"
+  }
+  if (upper.includes("WARNING") || upper.includes("WARN")) {
+    return "warning"
+  }
+  if (upper.includes("DEBUG")) {
+    return "debug"
+  }
+  return "info"
 }
 
-const SOURCE_LABELS = { '对话': '📝 对话', '手动': '✋ 手动', '配置': '⚙️ 配置', 'skills': '🛠️ 技能' }
+const LINE_COLORS = {
+  error: "text-rose-700 dark:text-rose-300",
+  warning: "text-amber-700 dark:text-amber-300",
+  info: "text-foreground",
+  debug: "text-muted-foreground/70",
+}
 
-export default function MemoryView() {
-  const [memories, setMemories] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState('all') // 'all' | 'hot' | 'warm' | 'cold'
-  const [editingId, setEditingId] = useState(null)
-  const [editForm, setEditForm] = useState({ summary: '', content: '' })
-  const [showAdd, setShowAdd] = useState(false)
-  const [addForm, setAddForm] = useState({ summary: '', content: '' })
-  const [compacting, setCompacting] = useState(false)
-
-  // 加载记忆
-  const load = async () => {
-    try {
-      const data = await getMemories()
-      setMemories(data)
-    } catch (e) {
-      console.error('加载记忆失败', e)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => { load() }, [])
-
-  // 按重要性分组统计
-  const counts = memories.reduce((acc, m) => {
-    acc[m.importance] = (acc[m.importance] || 0) + 1
-    return acc
-  }, { hot: 0, warm: 0, cold: 0 })
-
-  // 过滤
-  const filtered = memories.filter(m => {
-    const matchFilter = filter === 'all' || m.importance === filter
-    const matchQ = !query || m.summary.includes(query) || m.content.includes(query)
-    return matchFilter && matchQ
-  })
-
-  // 整合
-  const handleCompact = async () => {
-    setCompacting(true)
-    try {
-      const msg = await compactMemories()
-      await load()
-      console.log(msg)
-    } catch (e) {
-      console.error('整合失败', e)
-    } finally {
-      setCompacting(false)
-    }
-  }
-
-  // 删除
-  const handleDelete = async (id) => {
-    try {
-      await deleteMemory(id)
-      setMemories(prev => prev.filter(m => m.id !== id))
-    } catch (e) {
-      console.error('删除失败', e)
-    }
-  }
-
-  // 保存编辑
-  const handleSaveEdit = async () => {
-    try {
-      await updateMemory(editingId, editForm.summary, editForm.content)
-      setMemories(prev => prev.map(m =>
-        m.id === editingId ? { ...m, summary: editForm.summary, content: editForm.content } : m
-      ))
-      setEditingId(null)
-    } catch (e) {
-      console.error('保存失败', e)
-    }
-  }
-
-  // 新增
-  const handleAdd = async () => {
-    if (!addForm.summary.trim()) return
-    try {
-      const entry = await addMemory(addForm.summary, addForm.content, '手动')
-      setMemories(prev => [...prev, entry])
-      setAddForm({ summary: '', content: '' })
-      setShowAdd(false)
-    } catch (e) {
-      console.error('添加失败', e)
-    }
-  }
-
+function FilterGroup({ title, items, current, onChange }) {
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="px-6 pt-8 pb-4" style={{ borderBottom: '1px solid var(--border)' }}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold" style={{ color: 'var(--text)' }}>记忆</h2>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleCompact}
-              disabled={compacting}
-              className="mono px-2.5 py-1 rounded text-xs transition-colors"
-              style={{
-                background: 'var(--bg-btn)',
-                border: '1px solid var(--border)',
-                color: compacting ? 'var(--text-dim)' : 'var(--text-muted)',
-              }}>
-              {compacting ? '整合中...' : '🗜️ 整合'}
-            </button>
-            <button
-              onClick={() => setShowAdd(true)}
-              className="mono px-2.5 py-1 rounded text-xs transition-colors"
-              style={{
-                background: 'var(--bg-btn)',
-                border: '1px solid var(--border)',
-                color: 'var(--text-muted)',
-              }}>
-              + 添加
-            </button>
-          </div>
-        </div>
-
-        {/* 重要性统计卡片 */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          {Object.entries(IMPORTANCE_CONFIG).map(([key, cfg]) => (
-            <button
-              key={key}
-              onClick={() => setFilter(filter === key ? 'all' : key)}
-              className="p-3 rounded-lg text-center transition-all"
-              style={{
-                background: filter === key ? cfg.bg : 'var(--bg-card)',
-                border: `1px solid ${filter === key ? cfg.border : 'var(--border)'}`,
-              }}>
-              <div className="text-lg font-semibold" style={{ color: cfg.color }}>
-                {counts[key] || 0}
-              </div>
-              <div className="mono text-[11px]" style={{ color: 'var(--text-dim)' }}>
-                {cfg.label}
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {/* 搜索 */}
-        <div className="relative">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: 'var(--text-dim)' }}>
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <input value={query} onChange={e => setQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-2 rounded-md mono text-sm outline-none"
-            style={{ background: 'var(--bg-btn)', border: '1px solid var(--border)', color: 'var(--text)' }}
-            placeholder="搜索记忆..." />
-        </div>
+    <div className="space-y-1.5">
+      <div className="px-1 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground/82">
+        {title}
       </div>
-
-      {/* 列表 */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-3">
-        {loading ? (
-          <div className="text-sm py-8 text-center" style={{ color: 'var(--text-dim)' }}>
-            加载中...
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-sm py-8 text-center" style={{ color: 'var(--text-dim)' }}>
-            无记忆 {query ? '(无匹配结果)' : ''}
-          </div>
-        ) : filtered.map(m => {
-          const cfg = IMPORTANCE_CONFIG[m.importance] || IMPORTANCE_CONFIG.cold
+      <div className="space-y-1">
+        {items.map((item) => {
+          const active = current === item.value
           return (
-            <div key={m.id} className="p-4 rounded-lg"
-              style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs px-2 py-0.5 rounded font-medium"
-                    style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
-                    {cfg.label}
-                  </span>
-                  <span className="text-sm font-medium" style={{ color: 'var(--text)' }}>{m.summary}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="mono text-[11px]" style={{ color: 'var(--text-faint)' }}>
-                    {SOURCE_LABELS[m.source] || m.source}
-                  </span>
-                  <button
-                    onClick={() => { setEditingId(m.id); setEditForm({ summary: m.summary, content: m.content }) }}
-                    className="text-xs px-2 py-0.5 rounded"
-                    style={{ color: 'var(--text-dim)', background: 'var(--bg-btn)' }}>
-                    编辑
-                  </button>
-                  <button
-                    onClick={() => handleDelete(m.id)}
-                    className="text-xs px-2 py-0.5 rounded"
-                    style={{ color: '#ef4444', background: 'rgba(239,68,68,0.1)' }}>
-                    删除
-                  </button>
-                </div>
-              </div>
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--text-dim)' }}>{m.content}</p>
-              <div className="mt-2">
-                <span className="mono text-[11px]" style={{ color: 'var(--text-faint)' }}>
-                  {m.created_at} · 访问 {m.access_count} 次
-                </span>
-              </div>
-            </div>
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => onChange(item.value)}
+              className={cn(
+                "flex w-full items-center justify-between rounded-[0.9rem] border px-3 py-2 text-left text-[12px] transition-colors",
+                active
+                  ? "border-primary/18 bg-primary/10 text-primary"
+                  : "border-border/72 bg-background/60 text-muted-foreground hover:text-foreground"
+              )}>
+              <span>{item.label}</span>
+            </button>
           )
         })}
       </div>
-
-      {/* 编辑弹窗 */}
-      {editingId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: 'rgba(0,0,0,0.5)' }}>
-          <div className="w-full max-w-md p-5 rounded-xl"
-            style={{ background: 'var(--bg-sidebar)', border: '1px solid var(--border)' }}>
-            <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--text)' }}>编辑记忆</h3>
-            <input
-              value={editForm.summary}
-              onChange={e => setEditForm(f => ({ ...f, summary: e.target.value }))}
-              className="w-full mb-3 px-3 py-2 rounded-md mono text-sm outline-none"
-              style={{ background: 'var(--bg-btn)', border: '1px solid var(--border)', color: 'var(--text)' }}
-              placeholder="摘要"
-            />
-            <textarea
-              value={editForm.content}
-              onChange={e => setEditForm(f => ({ ...f, content: e.target.value }))}
-              rows={4}
-              className="w-full mb-3 px-3 py-2 rounded-md mono text-sm outline-none resize-none"
-              style={{ background: 'var(--bg-btn)', border: '1px solid var(--border)', color: 'var(--text)' }}
-              placeholder="完整内容"
-            />
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => setEditingId(null)}
-                className="px-3 py-1.5 rounded text-xs"
-                style={{ color: 'var(--text-dim)', background: 'var(--bg-btn)' }}>
-                取消
-              </button>
-              <button onClick={handleSaveEdit}
-                className="px-3 py-1.5 rounded text-xs"
-                style={{ color: '#fff', background: '#3b82f6' }}>
-                保存
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 新增弹窗 */}
-      {showAdd && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: 'rgba(0,0,0,0.5)' }}>
-          <div className="w-full max-w-md p-5 rounded-xl"
-            style={{ background: 'var(--bg-sidebar)', border: '1px solid var(--border)' }}>
-            <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--text)' }}>添加记忆</h3>
-            <input
-              value={addForm.summary}
-              onChange={e => setAddForm(f => ({ ...f, summary: e.target.value }))}
-              className="w-full mb-3 px-3 py-2 rounded-md mono text-sm outline-none"
-              style={{ background: 'var(--bg-btn)', border: '1px solid var(--border)', color: 'var(--text)' }}
-              placeholder="摘要（必填）"
-            />
-            <textarea
-              value={addForm.content}
-              onChange={e => setAddForm(f => ({ ...f, content: e.target.value }))}
-              rows={4}
-              className="w-full mb-3 px-3 py-2 rounded-md mono text-sm outline-none resize-none"
-              style={{ background: 'var(--bg-btn)', border: '1px solid var(--border)', color: 'var(--text)' }}
-              placeholder="完整内容"
-            />
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => { setShowAdd(false); setAddForm({ summary: '', content: '' }) }}
-                className="px-3 py-1.5 rounded text-xs"
-                style={{ color: 'var(--text-dim)', background: 'var(--bg-btn)' }}>
-                取消
-              </button>
-              <button onClick={handleAdd}
-                className="px-3 py-1.5 rounded text-xs"
-                style={{ color: '#fff', background: '#3b82f6' }}>
-                添加
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
+  )
+}
+
+function EmptyState({ title, description }) {
+  return (
+    <div className="rounded-[1rem] border border-dashed border-border/74 bg-background/40 px-5 py-10 text-center">
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="mt-2 text-[13px] leading-6 text-muted-foreground">{description}</p>
+    </div>
+  )
+}
+
+export default function MemoryView() {
+  const { t } = useI18n()
+  const [file, setFile] = useState("agent")
+  const [level, setLevel] = useState("ALL")
+  const [component, setComponent] = useState("all")
+  const [lineCount, setLineCount] = useState(100)
+  const [autoRefresh, setAutoRefresh] = useState(false)
+  const [lines, setLines] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const viewportRef = useRef(null)
+
+  const fetchLogs = useCallback(async () => {
+    setLoading(true)
+    setError("")
+
+    try {
+      const response = await getLogs({
+        file,
+        lines: lineCount,
+        level,
+        component,
+      })
+      setLines(response?.lines || [])
+
+      requestAnimationFrame(() => {
+        const element = viewportRef.current
+        if (element) {
+          element.scrollTo({ top: element.scrollHeight, behavior: "auto" })
+        }
+      })
+    } catch (nextError) {
+      const message = String(nextError?.message || nextError)
+      setError(message)
+      toast.error(t("logsPage.loadError"), {
+        description: message,
+      })
+    } finally {
+      setLoading(false)
+    }
+  }, [component, file, level, lineCount, t])
+
+  useEffect(() => {
+    void fetchLogs()
+  }, [fetchLogs])
+
+  useEffect(() => {
+    if (!autoRefresh) return
+    const timer = window.setInterval(() => {
+      void fetchLogs()
+    }, 5000)
+    return () => window.clearInterval(timer)
+  }, [autoRefresh, fetchLogs])
+
+  const filterGroups = useMemo(
+    () => ({
+      files: FILES.map((value) => ({ value, label: value })),
+      levels: LEVELS.map((value) => ({ value, label: value })),
+      components: COMPONENTS.map((value) => ({ value, label: value })),
+      lineCounts: LINE_COUNTS.map((value) => ({ value, label: String(value) })),
+    }),
+    []
+  )
+
+  return (
+    <ViewFrame
+      icon={FileTextIcon}
+      badge="Log Console"
+      title={t("logsPage.title")}
+      description={t("logsPage.description")}
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className="rounded-full px-2.5 py-0.5 text-[11px]">
+            {file}.log
+          </Badge>
+          <Badge variant="outline" className="rounded-full px-2.5 py-0.5 text-[11px]">
+            {level}
+          </Badge>
+          <Badge variant="outline" className="rounded-full px-2.5 py-0.5 text-[11px]">
+            {component}
+          </Badge>
+          <Button
+            variant={autoRefresh ? "default" : "outline"}
+            onClick={() => setAutoRefresh((current) => !current)}
+            className="rounded-[0.95rem]">
+            {autoRefresh ? t("logsPage.liveOn") : t("logsPage.liveOff")}
+          </Button>
+          <Button variant="outline" onClick={() => void fetchLogs()} className="rounded-[0.95rem]">
+            <RefreshCwIcon className={cn("size-4", loading && "animate-spin")} />
+            {t("common.refresh")}
+          </Button>
+        </div>
+      }>
+      <div className="flex h-full min-h-0 flex-col gap-3 p-3 md:p-4">
+        <div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-[240px_minmax(0,1fr)]">
+          <Card className="app-panel rounded-[1.1rem] border-border/74 py-0">
+            <CardHeader className="px-4 py-4">
+              <CardTitle className="text-[14px] font-semibold text-foreground">
+                {t("logsPage.filters")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 px-4 pb-4">
+              <FilterGroup
+                title={t("logsPage.file")}
+                items={filterGroups.files}
+                current={file}
+                onChange={setFile}
+              />
+              <FilterGroup
+                title={t("logsPage.level")}
+                items={filterGroups.levels}
+                current={level}
+                onChange={setLevel}
+              />
+              <FilterGroup
+                title={t("logsPage.component")}
+                items={filterGroups.components}
+                current={component}
+                onChange={setComponent}
+              />
+              <FilterGroup
+                title={t("logsPage.lines")}
+                items={filterGroups.lineCounts}
+                current={lineCount}
+                onChange={(value) => setLineCount(Number(value))}
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="app-panel rounded-[1.1rem] border-border/74 py-0">
+            <CardHeader className="border-b border-border/74 px-4 py-4">
+              <CardTitle className="flex items-center gap-2 text-[14px] font-semibold text-foreground">
+                <FileTextIcon className="size-4 text-primary" />
+                {file}.log
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {error ? (
+                <div className="border-b border-rose-500/16 bg-rose-500/7 px-4 py-3 text-[12px] text-rose-700 dark:text-rose-300">
+                  {error}
+                </div>
+              ) : null}
+
+              <div
+                ref={viewportRef}
+                className="h-[calc(100vh-20rem)] min-h-[360px] overflow-auto px-4 py-4 font-mono text-[12px] leading-6">
+                {loading ? (
+                  <EmptyState
+                    title={t("logsPage.loadingTitle")}
+                    description={t("logsPage.loadingDescription")}
+                  />
+                ) : lines.length === 0 ? (
+                  <EmptyState
+                    title={t("logsPage.emptyTitle")}
+                    description={t("logsPage.emptyDescription")}
+                  />
+                ) : (
+                  lines.map((line, index) => {
+                    const levelClass = LINE_COLORS[classifyLine(line)]
+                    return (
+                      <div
+                        key={`${line}-${index}`}
+                        className={cn(
+                          "rounded-[0.65rem] px-2 py-1 transition-colors hover:bg-background/70",
+                          levelClass
+                        )}>
+                        {line}
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </ViewFrame>
   )
 }

@@ -1,254 +1,989 @@
-import { useState, useEffect } from 'react'
-import { getTasks, createTask, updateTask, deleteTask } from './api'
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react"
+import {
+  CheckCircle2Icon,
+  CircleAlertIcon,
+  CpuIcon,
+  EyeIcon,
+  EyeOffIcon,
+  ExternalLinkIcon,
+  KeyRoundIcon,
+  SaveIcon,
+  SearchIcon,
+  Settings2Icon,
+  SlidersHorizontalIcon,
+  SparklesIcon,
+  Trash2Icon,
+  WandSparklesIcon,
+} from "lucide-react"
+import { toast } from "sonner"
 
-const STATUS_CONFIG = {
-  in_progress: { label: '🟡 进行中', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
-  completed:    { label: '🟢 已完成', color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
-  expired:      { label: '🔴 已过期', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
+import {
+  deleteEnvVar,
+  getEnvVars,
+  getPrimaryModelConfig,
+  revealEnvVar,
+  savePrimaryModelConfig,
+  setEnvVar,
+} from "@/api"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { buildModelConfigState, LOCAL_MODEL_PRESETS } from "@/components/model-config-utils"
+import { ViewFrame } from "@/components/view-frame"
+import { useI18n } from "@/i18n"
+import { cn } from "@/lib/utils"
+
+function StatusBadge({ configured, t }) {
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        "rounded-full px-2.5 py-0.5 text-[10px]",
+        configured
+          ? "border-emerald-500/20 bg-emerald-500/8 text-emerald-700 dark:text-emerald-300"
+          : "border-border/72 bg-background/72 text-muted-foreground"
+      )}>
+      {configured ? t("modelsPage.statusConfigured") : t("modelsPage.statusMissing")}
+    </Badge>
+  )
+}
+
+function RailItem({ item, active, onSelect, isDefault, t }) {
+  const Icon = item.type === "local" ? CpuIcon : item.type === "custom" ? Settings2Icon : SparklesIcon
+  const isSpecialEntry = item.type === "local" || item.type === "custom"
+  const typeBadgeLabel =
+    item.type === "local"
+      ? t("modelsPage.localAccessTag")
+      : item.type === "custom"
+        ? t("modelsPage.customAccessTag")
+        : null
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        "app-panel flex w-full items-start gap-3 rounded-[1rem] border px-3.5 py-3.5 text-left transition-all",
+        active ? "border-primary/25 bg-primary/8 shadow-sm" : "border-border/70 bg-background/60 hover:bg-muted/60"
+      )}>
+      <div
+        className={cn(
+          "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-[0.9rem]",
+          active ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"
+        )}>
+        <Icon className="size-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="truncate text-sm font-medium text-foreground">{item.label}</div>
+          {typeBadgeLabel ? (
+            <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[10px]">
+              {typeBadgeLabel}
+            </Badge>
+          ) : null}
+          {isSpecialEntry ? (
+            <Badge variant={item.ownsCurrentConfig ? "secondary" : "outline"} className="rounded-full px-2 py-0.5 text-[10px]">
+              {item.ownsCurrentConfig ? t("modelsPage.currentModeBadge") : t("modelsPage.switchModeBadge")}
+            </Badge>
+          ) : null}
+          {isDefault ? (
+            <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-[10px]">
+              {t("modelsPage.defaultBadge")}
+            </Badge>
+          ) : null}
+        </div>
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          <StatusBadge configured={item.configured} t={t} />
+          {item.defaultModelValue ? (
+            <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[10px]">
+              {item.defaultModelValue}
+            </Badge>
+          ) : null}
+          {item.type === "local" && item.presetId ? (
+            <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[10px]">
+              {LOCAL_MODEL_PRESETS.find((preset) => preset.id === item.presetId)?.label || item.presetId}
+            </Badge>
+          ) : null}
+        </div>
+      </div>
+    </button>
+  )
+}
+
+function LocalPresetButton({ preset, active, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-[0.9rem] border px-3 py-2 text-left transition-colors",
+        active
+          ? "border-primary/24 bg-primary/8 text-foreground"
+          : "border-border/70 bg-background/65 text-muted-foreground hover:bg-muted/55"
+      )}>
+      <div className="text-sm font-medium">{preset.label}</div>
+      <div className="mt-1 mono text-[11px]">{preset.baseUrl}</div>
+    </button>
+  )
+}
+
+function ConfigField({
+  label,
+  description,
+  envKey,
+  value,
+  placeholder,
+  secret = false,
+  revealedValue,
+  saving,
+  docsUrl,
+  onChange,
+  onSave,
+  onReveal,
+  onClear,
+  t,
+}) {
+  return (
+    <div className="rounded-[1rem] border border-border/72 bg-background/60 px-4 py-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="text-sm font-medium text-foreground">{label}</div>
+            {envKey ? (
+              <Badge variant="outline" className="mono rounded-full px-2 py-0.5 text-[10px]">
+                {envKey}
+              </Badge>
+            ) : null}
+            {secret ? (
+              <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[10px]">
+                Secret
+              </Badge>
+            ) : null}
+          </div>
+          {description ? (
+            <p className="mt-1 text-[12px] leading-5 text-muted-foreground">{description}</p>
+          ) : null}
+        </div>
+        {docsUrl ? (
+          <a href={docsUrl} target="_blank" rel="noreferrer" className="inline-flex">
+            <Button variant="outline" size="icon-sm" className="rounded-[0.85rem]">
+              <ExternalLinkIcon className="size-4" />
+            </Button>
+          </a>
+        ) : null}
+      </div>
+
+      <div className="mt-3 space-y-3">
+        <Input
+          value={secret ? revealedValue ?? value : value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          className="rounded-[0.95rem] border-border/78 bg-background/80 font-mono text-[12px]"
+          type={secret && !revealedValue ? "password" : "text"}
+        />
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={onSave} disabled={saving || !value.trim()} className="rounded-[0.9rem]">
+            <SaveIcon className="size-4" />
+            {t("modelsPage.saveAction")}
+          </Button>
+          {secret ? (
+            <Button variant="outline" onClick={onReveal} disabled={saving} className="rounded-[0.9rem]">
+              {revealedValue ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
+              {revealedValue ? t("modelsPage.hideSecret") : t("modelsPage.revealSecret")}
+            </Button>
+          ) : null}
+          <Button
+            variant="outline"
+            onClick={onClear}
+            disabled={saving}
+            className="rounded-[0.9rem] text-rose-600 hover:text-rose-700">
+            <Trash2Icon className="size-4" />
+            {t("modelsPage.clearAction")}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function StatCard({ label, value, hint, accentClass = "" }) {
+  return (
+    <div className={cn("app-panel rounded-[1rem] border-border/74 px-3 py-3", accentClass)}>
+      <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+        {label}
+      </div>
+      <div className="mt-2 text-xl font-semibold text-foreground">{value}</div>
+      {hint ? <div className="mt-1 text-[12px] text-muted-foreground">{hint}</div> : null}
+    </div>
+  )
 }
 
 export default function TaskView() {
-  const [tasks, setTasks] = useState([])
+  const { t } = useI18n()
+  const [vars, setVars] = useState({})
+  const [primaryModelConfig, setPrimaryModelConfig] = useState({
+    model: "",
+    provider: "",
+    baseUrl: "",
+    apiKey: "",
+    contextLength: null,
+  })
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('all') // 'all' | 'in_progress' | 'completed' | 'expired'
-  const [showAdd, setShowAdd] = useState(false)
-  const [newTask, setNewTask] = useState({ title: '', description: '', due_date: '' })
+  const [query, setQuery] = useState("")
+  const [activeItemId, setActiveItemId] = useState(null)
+  const [drafts, setDrafts] = useState({})
+  const [primaryDrafts, setPrimaryDrafts] = useState({})
+  const [revealed, setRevealed] = useState({})
+  const [savingKey, setSavingKey] = useState(null)
 
-  const load = async () => {
+  const deferredQuery = useDeferredValue(query.trim().toLowerCase())
+
+  const load = useCallback(async () => {
     try {
-      const data = await getTasks()
-      setTasks(data)
-    } catch (e) {
-      console.error('加载任务失败', e)
+      setLoading(true)
+      const [envResult, primaryModelResult] = await Promise.allSettled([
+        getEnvVars(),
+        getPrimaryModelConfig(),
+      ])
+
+      if (envResult.status === "fulfilled") {
+        setVars(envResult.value || {})
+      } else {
+        throw envResult.reason
+      }
+
+      if (primaryModelResult.status === "fulfilled") {
+        setPrimaryModelConfig(primaryModelResult.value || {})
+      }
+    } catch (error) {
+      console.error("加载模型配置失败", error)
+      toast.error(t("modelsPage.loadError"))
     } finally {
       setLoading(false)
     }
+  }, [t])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  const configState = useMemo(() => buildModelConfigState(vars, primaryModelConfig), [vars, primaryModelConfig])
+
+  const filteredSpecialEntries = useMemo(() => {
+    const items = configState.specialEntries
+    if (!deferredQuery) return items
+
+    return items.filter((entry) => {
+      const haystack = [
+        entry.label,
+        entry.type,
+        entry.defaultModelValue,
+        entry.baseUrlValue,
+        entry.providerValue,
+        entry.presetId,
+      ]
+        .join(" ")
+        .toLowerCase()
+      return haystack.includes(deferredQuery)
+    })
+  }, [configState.specialEntries, deferredQuery])
+
+  const filteredProviders = useMemo(() => {
+    const items = configState.providers
+    if (!deferredQuery) return items
+
+    return items.filter((provider) => {
+      const haystack = [
+        provider.label,
+        provider.envPrefix,
+        provider.defaultModelValue,
+        ...Object.keys(provider.entries),
+      ]
+        .join(" ")
+        .toLowerCase()
+      return haystack.includes(deferredQuery)
+    })
+  }, [configState.providers, deferredQuery])
+
+  const visibleItems = useMemo(
+    () => [...filteredSpecialEntries, ...filteredProviders],
+    [filteredProviders, filteredSpecialEntries]
+  )
+
+  useEffect(() => {
+    if (!visibleItems.length) {
+      setActiveItemId(null)
+      return
+    }
+
+    if (activeItemId && visibleItems.some((item) => item.id === activeItemId)) {
+      return
+    }
+
+    const preferredItem =
+      visibleItems.find((item) => item.type === "local" && item.configured) ||
+      visibleItems.find((item) => item.type === "custom" && item.configured) ||
+      visibleItems.find((item) => item.id === configState.defaultProviderId) ||
+      visibleItems.find((item) => item.type === "provider") ||
+      visibleItems[0]
+
+    setActiveItemId(preferredItem?.id ?? null)
+  }, [activeItemId, configState.defaultProviderId, visibleItems])
+
+  const activeItem = visibleItems.find((item) => item.id === activeItemId) || null
+  const activeProvider = activeItem?.type === "provider" ? activeItem : null
+  const activeSpecialEntry = activeItem && activeItem.type !== "provider" ? activeItem : null
+  const activeSpecialEntryOwnsConfig = Boolean(activeSpecialEntry?.ownsCurrentConfig)
+
+  const handleDraftChange = (envKey, value) => {
+    setDrafts((current) => ({
+      ...current,
+      [envKey]: value,
+    }))
   }
 
-  useEffect(() => { load() }, [])
+  const resolveFieldValue = (envKey) => {
+    if (!envKey) return ""
+    if (drafts[envKey] !== undefined) return drafts[envKey]
+    return vars[envKey]?.value ?? ""
+  }
 
-  const handleToggle = async (task) => {
-    const newStatus = task.status === 'completed' ? 'in_progress' : 'completed'
+  const handlePrimaryDraftChange = (field, value) => {
+    setPrimaryDrafts((current) => ({
+      ...current,
+      [field]: value,
+    }))
+  }
+
+  const resolvePrimaryFieldValue = (field) => {
+    if (!field) return ""
+    if (primaryDrafts[field] !== undefined) return primaryDrafts[field]
+
+    if (!activeSpecialEntryOwnsConfig) return ""
+
+    if (field === "model") return primaryModelConfig.model ?? ""
+    if (field === "baseUrl") return primaryModelConfig.baseUrl ?? ""
+    if (field === "apiKey") return primaryModelConfig.apiKey ?? ""
+    return ""
+  }
+
+  const commitPrimaryModelConfig = async (overrides) => {
+    const nextConfig = {
+      model: String(overrides?.model ?? (resolvePrimaryFieldValue("model") || "")).trim(),
+      provider: String(
+        overrides?.provider ??
+          (activeSpecialEntryOwnsConfig ? (primaryModelConfig.provider ?? "") : "")
+      ).trim(),
+      baseUrl: String(overrides?.baseUrl ?? (resolvePrimaryFieldValue("baseUrl") || "")).trim(),
+      apiKey: String(overrides?.apiKey ?? (resolvePrimaryFieldValue("apiKey") || "")).trim(),
+      contextLength: activeSpecialEntryOwnsConfig ? (primaryModelConfig.contextLength ?? null) : null,
+    }
+
+    await savePrimaryModelConfig(nextConfig)
+    await load()
+    setPrimaryDrafts({})
+    setRevealed((current) => {
+      const next = { ...current }
+      delete next["primary:apiKey"]
+      return next
+    })
+  }
+
+  const handleSave = async (envKey) => {
+    const nextValue = String(resolveFieldValue(envKey) || "").trim()
+    if (!nextValue) return
+
+    setSavingKey(envKey)
     try {
-      await updateTask(task.id, newStatus)
-      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus } : t))
-    } catch (e) {
-      console.error('更新状态失败', e)
+      await setEnvVar(envKey, nextValue)
+      await load()
+      setDrafts((current) => {
+        const next = { ...current }
+        delete next[envKey]
+        return next
+      })
+      toast.success(t("modelsPage.saveSuccess"), {
+        description: envKey,
+      })
+    } catch (error) {
+      toast.error(t("modelsPage.saveError"), {
+        description: String(error?.message || error),
+      })
+    } finally {
+      setSavingKey(null)
     }
   }
 
-  const handleDelete = async (id) => {
+  const handleClear = async (envKey) => {
+    if (!envKey) return
+    setSavingKey(envKey)
     try {
-      await deleteTask(id)
-      setTasks(prev => prev.filter(t => t.id !== id))
-    } catch (e) {
-      console.error('删除失败', e)
+      await deleteEnvVar(envKey)
+      await load()
+      setDrafts((current) => {
+        const next = { ...current }
+        delete next[envKey]
+        return next
+      })
+      setRevealed((current) => {
+        const next = { ...current }
+        delete next[envKey]
+        return next
+      })
+      toast.success(t("modelsPage.deleteSuccess"), {
+        description: envKey,
+      })
+    } catch (error) {
+      toast.error(t("modelsPage.deleteError"), {
+        description: String(error?.message || error),
+      })
+    } finally {
+      setSavingKey(null)
     }
   }
 
-  const handleAdd = async () => {
-    if (!newTask.title.trim()) return
+  const handleReveal = async (envKey) => {
+    if (revealed[envKey]) {
+      setRevealed((current) => {
+        const next = { ...current }
+        delete next[envKey]
+        return next
+      })
+      return
+    }
+
     try {
-      const task = await createTask(newTask.title, newTask.description, newTask.due_date || null)
-      setTasks(prev => [...prev, task])
-      setNewTask({ title: '', description: '', due_date: '' })
-      setShowAdd(false)
-    } catch (e) {
-      console.error('创建任务失败', e)
+      const response = await revealEnvVar(envKey)
+      setRevealed((current) => ({
+        ...current,
+        [envKey]: response.value,
+      }))
+    } catch (error) {
+      toast.error(t("modelsPage.revealError"), {
+        description: String(error?.message || error),
+      })
     }
   }
 
-  // 过滤
-  const filtered = tasks.filter(t => filter === 'all' || t.status === filter)
+  const handleSavePrimaryField = async (field) => {
+    const nextValue = String(resolvePrimaryFieldValue(field) || "").trim()
+    if (!nextValue) return
 
-  // 统计
-  const counts = tasks.reduce((acc, t) => {
-    acc[t.status] = (acc[t.status] || 0) + 1
-    return acc
-  }, { in_progress: 0, completed: 0, expired: 0 })
+    const fieldKey = `primary:${field}`
+    setSavingKey(fieldKey)
+    try {
+      const overrides = {
+        provider: "custom",
+      }
+
+      if (field === "model") overrides.model = nextValue
+      if (field === "baseUrl") overrides.baseUrl = nextValue
+      if (field === "apiKey") overrides.apiKey = nextValue
+
+      await commitPrimaryModelConfig(overrides)
+      toast.success(t("modelsPage.saveSuccess"), {
+        description: `model.${field}`,
+      })
+    } catch (error) {
+      toast.error(t("modelsPage.saveError"), {
+        description: String(error?.message || error),
+      })
+    } finally {
+      setSavingKey(null)
+    }
+  }
+
+  const handleClearPrimaryField = async (field) => {
+    const fieldKey = `primary:${field}`
+    setSavingKey(fieldKey)
+    try {
+      const overrides = {}
+
+      if (field === "model") overrides.model = ""
+      if (field === "baseUrl") {
+        overrides.baseUrl = ""
+        overrides.provider = ""
+      }
+      if (field === "apiKey") overrides.apiKey = ""
+
+      await commitPrimaryModelConfig(overrides)
+      toast.success(t("modelsPage.deleteSuccess"), {
+        description: `model.${field}`,
+      })
+    } catch (error) {
+      toast.error(t("modelsPage.deleteError"), {
+        description: String(error?.message || error),
+      })
+    } finally {
+      setSavingKey(null)
+    }
+  }
+
+  const handleTogglePrimaryReveal = () => {
+    const revealKey = "primary:apiKey"
+    const nextValue = String(resolvePrimaryFieldValue("apiKey") || "")
+
+    setRevealed((current) => {
+      const next = { ...current }
+      if (next[revealKey]) {
+        delete next[revealKey]
+      } else {
+        next[revealKey] = nextValue
+      }
+      return next
+    })
+  }
+
+  const activeLocalPresetId = (() => {
+    const normalizedBaseUrl = String(resolvePrimaryFieldValue("baseUrl") || "").trim().replace(/\/+$/, "")
+    if (!normalizedBaseUrl) return null
+
+    return (
+      LOCAL_MODEL_PRESETS.find((preset) => preset.baseUrl.replace(/\/+$/, "") === normalizedBaseUrl)?.id || null
+    )
+  })()
+
+  const handleApplyLocalPreset = (preset) => {
+    setPrimaryDrafts((current) => ({
+      ...current,
+      baseUrl: preset.baseUrl,
+    }))
+  }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="px-6 pt-8 pb-4" style={{ borderBottom: '1px solid var(--border)' }}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold" style={{ color: 'var(--text)' }}>任务</h2>
-          <button
-            onClick={() => setShowAdd(true)}
-            className="mono px-2.5 py-1 rounded text-xs transition-colors"
-            style={{
-              background: 'var(--bg-btn)',
-              border: '1px solid var(--border)',
-              color: 'var(--text-muted)',
-            }}>
-            + 新建任务
-          </button>
-        </div>
-
-        {/* 状态统计 */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-            <button
-              key={key}
-              onClick={() => setFilter(filter === key ? 'all' : key)}
-              className="p-3 rounded-lg text-center transition-all"
-              style={{
-                background: filter === key ? cfg.bg : 'var(--bg-card)',
-                border: `1px solid ${filter === key ? cfg.color + '60' : 'var(--border)'}`,
-              }}>
-              <div className="text-lg font-semibold" style={{ color: cfg.color }}>
-                {counts[key] || 0}
-              </div>
-              <div className="mono text-[11px]" style={{ color: 'var(--text-dim)' }}>
-                {cfg.label}
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {/* 筛选标签 */}
-        <div className="flex gap-1 flex-wrap">
-          {['all', 'in_progress', 'completed', 'expired'].map(f => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className="mono px-2.5 py-1 rounded text-xs transition-colors"
-              style={{
-                background: filter === f ? 'var(--nav-active-bg)' : 'transparent',
-                color: filter === f ? 'var(--text)' : 'var(--text-dim)',
-                border: `1px solid ${filter === f ? 'var(--border-focus)' : 'var(--border)'}`,
-              }}>
-              {f === 'all' ? '全部' : STATUS_CONFIG[f]?.label || f}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 任务列表 */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-3">
-        {loading ? (
-          <div className="text-sm py-8 text-center" style={{ color: 'var(--text-dim)' }}>
-            加载中...
+    <ViewFrame
+      icon={Settings2Icon}
+      badge={t("modelsPage.badge")}
+      title={t("modelsPage.title")}
+      description={t("modelsPage.description")}
+      stackActionsUntilLarge
+      actions={
+        <div className="flex w-full flex-col gap-2 xl:flex-row xl:items-center xl:justify-end">
+          <div className="relative flex-1 xl:min-w-[18rem]">
+            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("modelsPage.searchPlaceholder")}
+              className="h-10 rounded-[1rem] border-border/78 bg-background/74 pl-10"
+            />
           </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-sm py-8 text-center" style={{ color: 'var(--text-dim)' }}>
-            暂无任务
-          </div>
-        ) : filtered.map(task => {
-          const cfg = STATUS_CONFIG[task.status] || STATUS_CONFIG.in_progress
-          return (
-            <div key={task.id} className="p-4 rounded-lg"
-              style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
-              <div className="flex items-start gap-3">
-                {/* 复选框 */}
-                <button
-                  onClick={() => handleToggle(task)}
-                  className="mt-0.5 w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center transition-colors"
-                  style={{
-                    background: task.status === 'completed' ? cfg.color : 'transparent',
-                    border: `2px solid ${task.status === 'completed' ? cfg.color : 'var(--border)'}`,
-                  }}>
-                  {task.status === 'completed' && (
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                  )}
-                </button>
+        </div>
+      }>
+      <div className="flex h-full min-h-0 flex-col gap-3 p-3 md:p-4">
+        <div className="grid gap-2 lg:grid-cols-3">
+          <StatCard
+            label={t("modelsPage.providers")}
+            value={String(configState.totalProviders)}
+            hint={t("modelsPage.providerCountHint")}
+          />
+          <StatCard
+            label={t("modelsPage.configured")}
+            value={String(configState.configuredProviders)}
+            hint={t("modelsPage.configuredHint")}
+            accentClass="border-emerald-500/16 bg-emerald-500/5"
+          />
+          <StatCard
+            label={t("modelsPage.defaultModel")}
+            value={configState.defaultModelLabel || "—"}
+            hint={t("modelsPage.defaultHint")}
+            accentClass="border-primary/16 bg-primary/6"
+          />
+        </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span
-                      className={`text-sm font-medium ${task.status === 'completed' ? 'line-through' : ''}`}
-                      style={{ color: task.status === 'completed' ? 'var(--text-dim)' : 'var(--text)' }}>
-                      {task.title}
-                    </span>
-                    <span className="text-xs px-2 py-0.5 rounded"
-                      style={{ background: cfg.bg, color: cfg.color }}>
-                      {cfg.label}
-                    </span>
+        <div className="rounded-[1rem] border border-border/74 bg-background/40 px-4 py-3 text-[12px] leading-6 text-muted-foreground">
+          {t("modelsPage.helper")}
+        </div>
+
+        <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(22rem,26rem)_minmax(0,1fr)] 2xl:grid-cols-[26rem_minmax(0,1fr)]">
+          <Card className="app-panel min-h-0 overflow-hidden rounded-[1.1rem] border-border/74 py-0">
+            <CardHeader className="px-4 py-4">
+              <CardTitle className="text-[14px] font-semibold text-foreground">
+                {t("modelsPage.modelEntries")}
+              </CardTitle>
+              <CardDescription>{t("modelsPage.providerRailHint")}</CardDescription>
+            </CardHeader>
+            <ScrollArea className="min-h-0 flex-1">
+              <CardContent className="space-y-2 px-4 pb-4">
+                {loading ? (
+                  <div className="rounded-[1rem] border border-dashed border-border/74 bg-background/50 px-4 py-8 text-center text-[13px] text-muted-foreground">
+                    {t("modelsPage.loading")}
                   </div>
-                  {task.description && (
-                    <p className="text-sm mb-2" style={{ color: 'var(--text-dim)' }}>
-                      {task.description}
+                ) : visibleItems.length === 0 ? (
+                  <div className="rounded-[1rem] border border-dashed border-border/74 bg-background/50 px-4 py-8 text-center">
+                    <p className="text-sm font-medium text-foreground">{t("modelsPage.emptyTitle")}</p>
+                    <p className="mt-2 text-[13px] leading-6 text-muted-foreground">
+                      {t("modelsPage.emptyDescription")}
                     </p>
-                  )}
-                  {task.due_date && (
-                    <div className="flex items-center gap-1">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
-                        style={{ color: 'var(--text-faint)' }}>
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                      </svg>
-                      <span className="mono text-[11px]" style={{ color: 'var(--text-faint)' }}>
-                        {task.due_date}
-                      </span>
+                  </div>
+                ) : (
+                  <>
+                    {filteredSpecialEntries.length ? (
+                      <>
+                        <div className="px-1 pt-1 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                          {t("modelsPage.accessModes")}
+                        </div>
+                        {filteredSpecialEntries.map((entry) => (
+                          <RailItem
+                            key={entry.id}
+                            item={entry}
+                            active={entry.id === activeItemId}
+                            onSelect={() => setActiveItemId(entry.id)}
+                            isDefault={false}
+                            t={t}
+                          />
+                        ))}
+                      </>
+                    ) : null}
+
+                    {filteredProviders.length ? (
+                      <>
+                        <div className="px-1 pt-3 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                          {t("modelsPage.providers")}
+                        </div>
+                        {filteredProviders.map((provider) => (
+                          <RailItem
+                            key={provider.id}
+                            item={provider}
+                            active={provider.id === activeItemId}
+                            onSelect={() => setActiveItemId(provider.id)}
+                            isDefault={provider.id === configState.defaultProviderId}
+                            t={t}
+                          />
+                        ))}
+                      </>
+                    ) : null}
+                  </>
+                )}
+              </CardContent>
+            </ScrollArea>
+          </Card>
+
+          <Card className="app-panel min-h-0 overflow-hidden rounded-[1.1rem] border-border/74 py-0">
+            <ScrollArea className="min-h-0 flex-1">
+              <CardContent className="space-y-4 px-4 py-4">
+                {!activeItem ? (
+                  <div className="rounded-[1rem] border border-dashed border-border/74 bg-background/50 px-4 py-10 text-center">
+                    <p className="text-sm font-medium text-foreground">{t("modelsPage.noProviderSelected")}</p>
+                    <p className="mt-2 text-[13px] leading-6 text-muted-foreground">
+                      {t("modelsPage.noProviderSelectedDescription")}
+                    </p>
+                  </div>
+                ) : activeSpecialEntry ? (
+                  <>
+                    <div className="flex flex-wrap items-start justify-between gap-3 rounded-[1.05rem] border border-border/74 bg-background/56 px-4 py-4">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-[1.02rem] font-semibold text-foreground">{activeSpecialEntry.label}</h2>
+                          <StatusBadge configured={activeSpecialEntry.configured} t={t} />
+                          <Badge variant="outline" className="rounded-full px-2.5 py-0.5 text-[10px]">
+                            model.provider = custom
+                          </Badge>
+                          <Badge
+                            variant={activeSpecialEntryOwnsConfig ? "secondary" : "outline"}
+                            className="rounded-full px-2.5 py-0.5 text-[10px]">
+                            {activeSpecialEntryOwnsConfig
+                              ? t("modelsPage.currentModeBadge")
+                              : t("modelsPage.switchModeBadge")}
+                          </Badge>
+                        </div>
+                        <p className="text-[13px] leading-6 text-muted-foreground">
+                          {activeSpecialEntry.type === "local"
+                            ? activeSpecialEntryOwnsConfig
+                              ? t("modelsPage.localHeroActiveDescription")
+                              : t("modelsPage.localHeroInactiveDescription")
+                            : activeSpecialEntryOwnsConfig
+                              ? t("modelsPage.customHeroActiveDescription")
+                              : t("modelsPage.customHeroInactiveDescription")}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="outline" className="rounded-full px-2.5 py-1 text-[10px]">
+                          {resolvePrimaryFieldValue("model") || t("modelsPage.noDefaultModel")}
+                        </Badge>
+                        {activeSpecialEntry.type === "local" && activeLocalPresetId ? (
+                          <Badge variant="outline" className="rounded-full px-2.5 py-1 text-[10px]">
+                            {LOCAL_MODEL_PRESETS.find((preset) => preset.id === activeLocalPresetId)?.label ||
+                              activeLocalPresetId}
+                          </Badge>
+                        ) : null}
+                      </div>
                     </div>
-                  )}
-                </div>
 
-                <button
-                  onClick={() => handleDelete(task.id)}
-                  className="p-1.5 rounded flex-shrink-0"
-                  style={{ color: 'var(--text-dim)' }}
-                  onMouseEnter={e => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = 'rgba(239,68,68,0.1)' }}
-                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-dim)'; e.currentTarget.style.background = 'transparent' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          )
-        })}
-      </div>
+                    {activeSpecialEntry.type === "local" ? (
+                      <Card className="rounded-[1.05rem] border-border/74 py-0">
+                        <CardHeader className="px-4 py-4">
+                          <div className="flex items-center gap-2">
+                            <CpuIcon className="size-4 text-primary" />
+                            <CardTitle className="text-[14px]">{t("modelsPage.localPresets")}</CardTitle>
+                          </div>
+                          <CardDescription>{t("modelsPage.localPresetsHint")}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="grid gap-2 px-4 pb-4 md:grid-cols-2 xl:grid-cols-3">
+                          {LOCAL_MODEL_PRESETS.map((preset) => (
+                            <LocalPresetButton
+                              key={preset.id}
+                              preset={preset}
+                              active={preset.id === activeLocalPresetId}
+                              onClick={() => handleApplyLocalPreset(preset)}
+                            />
+                          ))}
+                        </CardContent>
+                      </Card>
+                    ) : null}
 
-      {/* 新建任务弹窗 */}
-      {showAdd && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: 'rgba(0,0,0,0.5)' }}>
-          <div className="w-full max-w-md p-5 rounded-xl"
-            style={{ background: 'var(--bg-sidebar)', border: '1px solid var(--border)' }}>
-            <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--text)' }}>新建任务</h3>
-            <input
-              value={newTask.title}
-              onChange={e => setNewTask(f => ({ ...f, title: e.target.value }))}
-              className="w-full mb-3 px-3 py-2 rounded-md mono text-sm outline-none"
-              style={{ background: 'var(--bg-btn)', border: '1px solid var(--border)', color: 'var(--text)' }}
-              placeholder="任务标题（必填）"
-              autoFocus
-            />
-            <textarea
-              value={newTask.description}
-              onChange={e => setNewTask(f => ({ ...f, description: e.target.value }))}
-              rows={3}
-              className="w-full mb-3 px-3 py-2 rounded-md mono text-sm outline-none resize-none"
-              style={{ background: 'var(--bg-btn)', border: '1px solid var(--border)', color: 'var(--text)' }}
-              placeholder="任务描述（可选）"
-            />
-            <div className="mb-4">
-              <label className="block text-xs mb-1" style={{ color: 'var(--text-dim)' }}>截止日期（可选）</label>
-              <input
-                type="date"
-                value={newTask.due_date}
-                onChange={e => setNewTask(f => ({ ...f, due_date: e.target.value }))}
-                className="w-full px-3 py-2 rounded-md mono text-sm outline-none"
-                style={{ background: 'var(--bg-btn)', border: '1px solid var(--border)', color: 'var(--text)' }}
-              />
-            </div>
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => { setShowAdd(false); setNewTask({ title: '', description: '', due_date: '' }) }}
-                className="px-3 py-1.5 rounded text-xs"
-                style={{ color: 'var(--text-dim)', background: 'var(--bg-btn)' }}>
-                取消
-              </button>
-              <button onClick={handleAdd}
-                className="px-3 py-1.5 rounded text-xs"
-                style={{ color: '#fff', background: '#3b82f6' }}>
-                创建
-              </button>
-            </div>
-          </div>
+                    <Card className="rounded-[1.05rem] border-border/74 py-0">
+                      <CardHeader className="px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          <KeyRoundIcon className="size-4 text-primary" />
+                          <CardTitle className="text-[14px]">{t("modelsPage.connectionSection")}</CardTitle>
+                        </div>
+                        <CardDescription>
+                          {activeSpecialEntry.type === "local"
+                            ? t("modelsPage.localConnectionDescription")
+                            : t("modelsPage.customConnectionDescription")}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-3 px-4 pb-4">
+                        <ConfigField
+                          label={t("modelsPage.baseUrlLabel")}
+                          description={
+                            activeSpecialEntry.type === "local"
+                              ? t("modelsPage.localBaseUrlDescription")
+                              : t("modelsPage.customBaseUrlDescription")
+                          }
+                          envKey="model.base_url"
+                          value={resolvePrimaryFieldValue("baseUrl")}
+                          placeholder={t("modelsPage.baseUrlPlaceholder")}
+                          revealedValue={null}
+                          saving={savingKey === "primary:baseUrl"}
+                          docsUrl={activeSpecialEntry.docsUrl}
+                          onChange={(value) => handlePrimaryDraftChange("baseUrl", value)}
+                          onSave={() => handleSavePrimaryField("baseUrl")}
+                          onReveal={() => {}}
+                          onClear={() => handleClearPrimaryField("baseUrl")}
+                          t={t}
+                        />
+
+                        <ConfigField
+                          label={t("modelsPage.apiKeyLabel")}
+                          description={
+                            activeSpecialEntry.type === "local"
+                              ? t("modelsPage.localApiKeyDescription")
+                              : t("modelsPage.customApiKeyDescription")
+                          }
+                          envKey="model.api_key"
+                          value={resolvePrimaryFieldValue("apiKey")}
+                          placeholder={t("modelsPage.apiKeyPlaceholder")}
+                          secret
+                          revealedValue={revealed["primary:apiKey"]}
+                          saving={savingKey === "primary:apiKey"}
+                          docsUrl={activeSpecialEntry.docsUrl}
+                          onChange={(value) => handlePrimaryDraftChange("apiKey", value)}
+                          onSave={() => handleSavePrimaryField("apiKey")}
+                          onReveal={handleTogglePrimaryReveal}
+                          onClear={() => handleClearPrimaryField("apiKey")}
+                          t={t}
+                        />
+                      </CardContent>
+                    </Card>
+
+                    <Card className="rounded-[1.05rem] border-border/74 py-0">
+                      <CardHeader className="px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          <WandSparklesIcon className="size-4 text-primary" />
+                          <CardTitle className="text-[14px]">{t("modelsPage.modelSection")}</CardTitle>
+                        </div>
+                        <CardDescription>
+                          {activeSpecialEntry.type === "local"
+                            ? t("modelsPage.localModelDescription")
+                            : t("modelsPage.customModelDescription")}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-3 px-4 pb-4">
+                        <ConfigField
+                          label={t("modelsPage.defaultModelLabel")}
+                          description={
+                            activeSpecialEntry.type === "local"
+                              ? t("modelsPage.localDefaultModelDescription")
+                              : t("modelsPage.customDefaultModelDescription")
+                          }
+                          envKey="model.default"
+                          value={resolvePrimaryFieldValue("model")}
+                          placeholder={t("modelsPage.defaultModelPlaceholder")}
+                          revealedValue={null}
+                          saving={savingKey === "primary:model"}
+                          docsUrl={activeSpecialEntry.docsUrl}
+                          onChange={(value) => handlePrimaryDraftChange("model", value)}
+                          onSave={() => handleSavePrimaryField("model")}
+                          onReveal={() => {}}
+                          onClear={() => handleClearPrimaryField("model")}
+                          t={t}
+                        />
+                      </CardContent>
+                    </Card>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex flex-wrap items-start justify-between gap-3 rounded-[1.05rem] border border-border/74 bg-background/56 px-4 py-4">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-[1.02rem] font-semibold text-foreground">{activeProvider.label}</h2>
+                          <StatusBadge configured={activeProvider.configured} t={t} />
+                          {activeProvider.id === configState.defaultProviderId ? (
+                            <Badge variant="secondary" className="rounded-full px-2.5 py-0.5 text-[10px]">
+                              {t("modelsPage.defaultBadge")}
+                            </Badge>
+                          ) : null}
+                        </div>
+                        <p className="text-[13px] leading-6 text-muted-foreground">
+                          {t("modelsPage.providerHeroDescription")}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="outline" className="rounded-full px-2.5 py-1 text-[10px]">
+                          {activeProvider.defaultModelValue || t("modelsPage.noDefaultModel")}
+                        </Badge>
+                        <Badge variant="outline" className="rounded-full px-2.5 py-1 text-[10px]">
+                          {activeProvider.envPrefix}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <Card className="rounded-[1.05rem] border-border/74 py-0">
+                      <CardHeader className="px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          <KeyRoundIcon className="size-4 text-primary" />
+                          <CardTitle className="text-[14px]">{t("modelsPage.connectionSection")}</CardTitle>
+                        </div>
+                        <CardDescription>{t("modelsPage.connectionDescription")}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-3 px-4 pb-4">
+                        {activeProvider.apiKeyKey ? (
+                          <ConfigField
+                            label={t("modelsPage.apiKeyLabel")}
+                            description={vars[activeProvider.apiKeyKey]?.description}
+                            envKey={activeProvider.apiKeyKey}
+                            value={resolveFieldValue(activeProvider.apiKeyKey)}
+                            placeholder={t("modelsPage.apiKeyPlaceholder")}
+                            secret
+                            revealedValue={revealed[activeProvider.apiKeyKey]}
+                            saving={savingKey === activeProvider.apiKeyKey}
+                            docsUrl={activeProvider.docsUrl}
+                            onChange={(value) => handleDraftChange(activeProvider.apiKeyKey, value)}
+                            onSave={() => handleSave(activeProvider.apiKeyKey)}
+                            onReveal={() => handleReveal(activeProvider.apiKeyKey)}
+                            onClear={() => handleClear(activeProvider.apiKeyKey)}
+                            t={t}
+                          />
+                        ) : null}
+
+                        {activeProvider.baseUrlKey ? (
+                          <ConfigField
+                            label={t("modelsPage.baseUrlLabel")}
+                            description={vars[activeProvider.baseUrlKey]?.description}
+                            envKey={activeProvider.baseUrlKey}
+                            value={resolveFieldValue(activeProvider.baseUrlKey)}
+                            placeholder={t("modelsPage.baseUrlPlaceholder")}
+                            revealedValue={null}
+                            saving={savingKey === activeProvider.baseUrlKey}
+                            docsUrl={activeProvider.docsUrl}
+                            onChange={(value) => handleDraftChange(activeProvider.baseUrlKey, value)}
+                            onSave={() => handleSave(activeProvider.baseUrlKey)}
+                            onReveal={() => {}}
+                            onClear={() => handleClear(activeProvider.baseUrlKey)}
+                            t={t}
+                          />
+                        ) : null}
+                      </CardContent>
+                    </Card>
+
+                    <Card className="rounded-[1.05rem] border-border/74 py-0">
+                      <CardHeader className="px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          <WandSparklesIcon className="size-4 text-primary" />
+                          <CardTitle className="text-[14px]">{t("modelsPage.modelSection")}</CardTitle>
+                        </div>
+                        <CardDescription>{t("modelsPage.modelDescription")}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-3 px-4 pb-4">
+                        {activeProvider.defaultModelKey ? (
+                          <ConfigField
+                            label={t("modelsPage.defaultModelLabel")}
+                            description={vars[activeProvider.defaultModelKey]?.description}
+                            envKey={activeProvider.defaultModelKey}
+                            value={resolveFieldValue(activeProvider.defaultModelKey)}
+                            placeholder={t("modelsPage.defaultModelPlaceholder")}
+                            revealedValue={null}
+                            saving={savingKey === activeProvider.defaultModelKey}
+                            docsUrl={activeProvider.docsUrl}
+                            onChange={(value) => handleDraftChange(activeProvider.defaultModelKey, value)}
+                            onSave={() => handleSave(activeProvider.defaultModelKey)}
+                            onReveal={() => {}}
+                            onClear={() => handleClear(activeProvider.defaultModelKey)}
+                            t={t}
+                          />
+                        ) : (
+                          <div className="rounded-[0.95rem] border border-dashed border-border/74 bg-background/56 px-4 py-6 text-sm text-muted-foreground">
+                            {t("modelsPage.defaultModelUnavailable")}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    <Card className="rounded-[1.05rem] border-border/74 py-0">
+                      <CardHeader className="px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          <SlidersHorizontalIcon className="size-4 text-primary" />
+                          <CardTitle className="text-[14px]">{t("modelsPage.advancedSection")}</CardTitle>
+                        </div>
+                        <CardDescription>{t("modelsPage.advancedDescription")}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-3 px-4 pb-4">
+                        {activeProvider.parameterKeys.length ? (
+                          activeProvider.parameterKeys.map((envKey) => (
+                            <ConfigField
+                              key={envKey}
+                              label={envKey.replace(`${activeProvider.envPrefix}`, "")}
+                              description={vars[envKey]?.description}
+                              envKey={envKey}
+                              value={resolveFieldValue(envKey)}
+                              placeholder={t("modelsPage.parameterPlaceholder")}
+                              revealedValue={null}
+                              saving={savingKey === envKey}
+                              docsUrl={activeProvider.docsUrl}
+                              onChange={(value) => handleDraftChange(envKey, value)}
+                              onSave={() => handleSave(envKey)}
+                              onReveal={() => {}}
+                              onClear={() => handleClear(envKey)}
+                              t={t}
+                            />
+                          ))
+                        ) : (
+                          <div className="rounded-[0.95rem] border border-dashed border-border/74 bg-background/56 px-4 py-6 text-sm text-muted-foreground">
+                            {t("modelsPage.advancedEmpty")}
+                          </div>
+                        )}
+
+                        <div className="rounded-[0.95rem] border border-primary/16 bg-primary/6 px-4 py-3 text-[12px] leading-6 text-muted-foreground">
+                          <div className="mb-1 flex items-center gap-2 font-medium text-foreground">
+                            <CircleAlertIcon className="size-4 text-primary" />
+                            {t("modelsPage.comingSoonTitle")}
+                          </div>
+                          {t("modelsPage.comingSoonDescription")}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </>
+                )}
+              </CardContent>
+            </ScrollArea>
+          </Card>
         </div>
-      )}
-    </div>
+      </div>
+    </ViewFrame>
   )
 }
