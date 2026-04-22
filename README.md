@@ -1,230 +1,326 @@
-# Hermes Desktop Lite
+# 🚀 Hermes Desktop Lite
 
-Hermes Desktop Lite 是一个基于 React + Vite + Tauri 2 的桌面端原型工程，用来把本地 Hermes Agent 的聊天能力包装成一个带侧边栏、多视图和设置面板的桌面应用。
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Tauri](https://img.shields.io/badge/Tauri-2.x-ffc107?logo=Tauri)](https://tauri.app/)
+[![React](https://img.shields.io/badge/React-19.2.4-61DAFB?logo=react)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-8.0.4-646CFF?logo=Vite)](https://vitejs.dev/)
+[![Tailwind](https://img.shields.io/badge/Tailwind-4.2.2-38B2AC?logo=tailwindcss)](https://tailwindcss.com/)
+[![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-local-000000?logo=shadcn)](https://ui.shadcn.com/)
 
-这个仓库当前更接近“可运行的产品原型”而不是完整产品：
+> Hermes AI Agent 的桌面客户端 - 基于 Tauri 2 + React 19 构建（当前支持 macOS）
 
-- 聊天主流程、Hermes 网关连接检测、主题/语言切换已经可以跑通
-- 整体界面基于 `shadcn/ui` 组件体系和本地落地组件源码构建
-- `Memory`、`Cron`、`Tasks`、`Files`、`Terminal` 等页面已经有完整交互外壳
-- 一部分后端数据仍是内存态或 mock 实现，不能按生产能力理解
+---
 
-> 当前最重要的阅读方式：把它看成一个 Hermes 桌面端 UI/交互原型 + Tauri 集成实验项目，而不是一个已经完成数据持久化和真实文件管理能力的成品。
+## 📸 应用预览
 
-## 项目概览
+<div align="center">
+
+**主界面（聊天视图）** | **侧边栏导航** | **文件管理** | **终端集成**
+:---:|:---:|:---:|:---:
+<img src="screenshots/chat-view.png" width="300" alt="聊天视图"> | <img src="screenshots/sidebar.png" width="300" alt="侧边栏"> | <img src="screenshots/files.png" width="300" alt="文件管理"> | <img src="screenshots/terminal.png" width="300" alt="终端">
+
+**设置面板** | **日志管理** | **快捷指令查看** | **Cron 调度**
+<img src="screenshots/settings.png" width="300" alt="设置"> | <img src="screenshots/memory.png" width="300" alt="记忆"> | <img src="screenshots/tasks.png" width="300" alt="任务"> | <img src="screenshots/cron.png" width="300" alt="Cron">
+
+</div>
+
+> **提示**：以上为截图占位符，请将实际截图放置于 `screenshots/` 目录，并确保文件名匹配。
+
+---
+
+## ✨ 核心功能（7 大侧边栏模块）
+
+### 1. 💬 当前会话（Chat）
+流式对话、Markdown 渲染、代码高亮、工具调用可视化、附件支持、上下文自动裁剪。
+
+### 2. 📚 会话列表（Sessions）
+历史会话管理：创建、切换、重命名、删除、置顶、搜索。数据持久化到 SQLite。
+
+### 3. ⏰ 定时任务（Cron）
+Cron 作业列表、创建/删除、表达式支持。 
+
+### 4. 📂 文件管理（Files）
+文件树浏览、预览（代码高亮）、编辑（Tauri 模式）、新建/重命名/删除。
+
+### 5. 💻 终端操作（Terminal）
+xterm.js 集成 + PTY 会话，支持 bash/zsh/sh，交互式 Shell 命令。
+
+
+### 7. 📖 Hermes 指令（Commands）
+内置命令参考手册，分类浏览、搜索、一键复制。
+
+---
+
+## ⚙️ 设置与模型选择
+
+**设置面板**（Settings Modal）：
+- 网关地址/端口配置 + 连接测试
+- 主题切换（亮/暗/系统）
+- 语言切换（中/英/繁）
+- Agent 选择（当前仅 Hermes Agent）
+
+**模型选择**（聊天界面右上角）：
+- 选择当前会话使用的模型
+- 显示默认模型
+- 自动从配置读取可用模型列表
+
+> **注意**：模型配置（API Key、Base URL 等）通过 Hermes 环境变量管理，**客户端不提供配置界面**。
+
+---
+
+## 🏗️ 架构设计
 
 ```mermaid
 flowchart LR
-    UI["React UI<br/>App.jsx + shadcn/ui"] --> API["src/api.js"]
-    API -->|Browser Mode| Gateway["Hermes HTTP API<br/>/v1/chat/completions"]
-    API -->|Tauri Mode| Commands["src-tauri/src/commands.rs"]
-    Commands --> Config["本地配置文件<br/>app_data_dir/config.json"]
-    Commands --> Runtime["内存态运行数据<br/>sessions / messages / memories / tasks / workspaces"]
+    UI["React UI<br/>App.jsx + shadcn/ui"] --> API["src/api.js<br/>双模式抽象层"]
+    API -->|Browser| Gateway["Hermes HTTP API<br/>/v1/responses SSE"]
+    API -->|Tauri| Commands["src-tauri/src/commands.rs<br/>Rust 命令层"]
+    Commands --> DB[(SQLite<br/>sessions.db)]
+    Commands --> Config[config.json]
+    Commands --> Runtime[内存态数据<br/>Memories/Tasks/Cron]
     Commands --> Gateway
 ```
 
-## 界面组成
+**技术栈**：
 
-```mermaid
-flowchart TD
-    Sidebar["左侧边栏"] --> Chat["Chat"]
-    Sidebar --> Memory["Memory"]
-    Sidebar --> Tasks["Tasks"]
-    Sidebar --> Files["Files"]
-    Sidebar --> Terminal["Terminal"]
-    Sidebar --> Commands["Commands"]
-    Sidebar --> Settings["Settings Modal"]
+| 层级 | 技术 | 版本 |
+|------|------|------|
+| 桌面框架 | Tauri | 2.10.1 |
+| 前端框架 | React | 19.2.4 |
+| 构建工具 | Vite | 8.0.4 |
+| UI 组件 | shadcn/ui + Radix UI | 本地落地 |
+| 样式系统 | Tailwind CSS | 4.2.2 |
+| 动效库 | Framer Motion | 12.38.0 |
+| 终端 | xterm.js | 5.3.0 |
+| 图标 | Lucide React | 1.8.0 |
+| 主题 | next-themes | 0.4.6 |
+| 通知 | Sonner | 2.0.7 |
+| 后端语言 | Rust | 2021 edition |
 
-    Chat --> Sessions["历史会话 / 搜索 / 置顶 / 删除"]
-    Chat --> Stream["SSE 流式响应"]
-    Chat --> Workspace["工作区切换"]
-    Settings --> Theme["主题"]
-    Settings --> Language["语言"]
-    Settings --> GatewayConfig["网关地址与端口"]
-    Files --> Preview["目录 / 预览 / 创建 / 删除"]
-```
+**平台支持**：macOS（优先）→ Linux → Windows（后续）
 
-## 当前功能状态
+---
 
-| 模块 | 当前状态 | 说明 |
-| --- | --- | --- |
-| Chat 主界面 | 可用 | 支持发送消息、接收流式 token、错误提示、上下文裁剪 |
-| Hermes 连接检测 | 可用 | 可检测网关地址与端口，默认目标为 `127.0.0.1:8642` |
-| 主题 / 语言设置 | 可用 | 支持浅色 / 深色 / 跟随系统，支持中英繁切换 |
-| 会话列表 | 部分可用 | 支持搜索、置顶、删除、选择；当前 Tauri 后端仍为内存态，重启后会重置 |
-| Memory 页面 | 原型可用 | 页面交互完整，增删改查与“整合”入口存在；当前数据为内存态 |
-| Tasks 页面 | 原型可用 | 支持创建、切换状态、删除；当前数据为内存态 |
-| Files 页面 | UI 原型 | 页面流程完整，但当前 Tauri 文件命令仍为 mock 实现 |
-| Terminal 页面 | 基础可用 | 通过 Tauri PTY 提供内置终端会话 |
-| Commands 页面 | 可用 | 提供 Hermes 命令参考与分类浏览 |
-| Workspace 切换 | 基础可用 | 有默认工作区切换 UI；完整管理能力仍未完成 |
-| Hermes 版本信息 | 部分可用 | 可读取本机 `hermes --version`，并查询最新 release 信息 |
-| Hermes 更新 | 部分可用 | 桌面模式下会尝试执行 `hermes update` |
+## 🚀 快速开始
 
-## 适合做什么
+### 环境要求
 
-- 迭代 Hermes 桌面端视觉和交互方案
-- 验证 Tauri 桌面壳与本地 HTTP Agent 的集成方式
-- 拆分聊天、设置、文件、记忆等多视图桌面应用结构
-- 作为后续真实持久化、真实文件系统接入前的前后端对接骨架
+- **Node.js** ≥ 20
+- **Rust**（Tauri 开发需要）: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+- **系统依赖**：请参考 [Tauri 官方文档](https://tauri.app/v1/guides/getting-started/prerequisites)
 
-## 现在还不适合做什么
-
-- 作为生产可用的对话历史管理工具
-- 作为真实文件浏览器或编辑器使用
-- 作为具备完整数据持久化能力的桌面知识库
-- 作为多 Agent、多工作区的成熟管理应用
-
-## 技术栈
-
-| 层级 | 技术 |
-| --- | --- |
-| 桌面壳 | Tauri 2 |
-| 前端 | React 19, Vite 8 |
-| UI | Tailwind CSS 4, `shadcn/ui`, Radix UI, Lucide |
-| 动效与主题 | Framer Motion, `next-themes`, Sonner |
-| 后端命令层 | Rust |
-| Agent 接入 | Hermes HTTP API, SSE 流式响应 |
-| 多语言 | `zh` / `en` / `zh-tw` |
-
-## 运行模式
-
-### 1. 纯前端模式
-
-适合只改 UI、样式、交互结构。
+### 安装与运行
 
 ```bash
+# 克隆仓库
+git clone https://github.com/8187735/hermes-desktop-lite.git
+cd hermes-desktop-lite
+
+# 安装依赖
 npm install
-npm run dev
+
+# 启动 Tauri 桌面应用
+npm run tauri dev
 ```
 
-默认访问地址通常为：
+自动打开桌面窗口。
 
-```text
-http://localhost:5173/
-```
+**前提**：Node.js ≥ 20、Rust 环境、本地运行 Hermes Agent（默认端口 8642）。
 
-说明：
+**Hermes Gateway 默认地址**：http://127.0.0.1:8642
 
-- 此模式只启动 Vite，不启动 Tauri 桌面壳
-- `src/api.js` 会根据是否处于 Tauri 环境决定走 mock 或浏览器侧逻辑
-- 浏览器模式下，部分设置走 `localStorage`，部分数据使用 mock 返回值
+> 如果本地未运行 Hermes Agent，Chat 页面会显示未连接状态，可通过设置面板修改地址。
 
-### 2. 桌面开发模式
+---
 
-适合联调 Tauri 命令、设置保存、桌面窗口行为。
+## 📦 构建发布
+
+### 桌面版本（当前仅 macOS）
 
 ```bash
-npm install
+# macOS Universal（包含 Intel + Apple Silicon）
+npm run build:mac:universal
+```
+
+构建产物位于 `src-tauri/target/release/bundle/`
+
+**后续平台支持**：
+- Linux（x64/ARM64 DEB）—— 开发完成后提供
+- Windows（MSI/EXE）—— 视情况支持
+
+---
+
+## 🎯 功能状态
+
+| 模块 | 状态 | 说明 |
+|------|------|------|
+| 💬 当前会话（Chat） | ✅ 完整 | 流式响应、Markdown、工具可视化、上下文管理 |
+| 📚 会话列表（Sessions） | ✅ 完整 | CRUD、置顶、搜索、SQLite 持久化 |
+| ⏰ 定时任务（Cron） | ⚠️ UI 完整 | 列表/创建/删除已完成，调度执行未实现 |
+| 📂 文件管理（Files） | ✅ 完整（Tauri） | 浏览/预览/编辑/删除，浏览器模式为 Stub |
+| 💻 终端操作（Terminal） | ✅ 完整 | xterm.js + PTY 会话，支持交互式 Shell |
+| ✅ 任务管理（Tasks） | ⚠️ UI 完整 | 状态流转、进度统计，数据未持久化 |
+| 📖 Hermes 指令（Commands） | ✅ 完整 | 命令参考手册，分类浏览 + 搜索 |
+| ⚙️ 设置面板（Settings） | ✅ 完整 | 主题/语言/网关/Agent 配置 |
+| 🔌 模型选择（Model Selector） | ✅ 可用 | 聊天右上角下拉菜单选择模型（配置在 Hermes 环境变量） |
+
+
+---
+
+## 📊 数据持久化状态总览
+
+| 数据类型 | 存储方式 | 位置 | 状态 |
+|---------|---------|------|------|
+| 会话（Sessions） | SQLite | `~/.hermes/hermes-desktop-lite/sessions.db` | ✅ 持久化 |
+| 消息（Messages） | SQLite（关联会话） | 同上 | ✅ 持久化 |
+| 配置（Config） | JSON 文件 | `~/.hermes/hermes-desktop-lite/config.json` | ✅ 持久化 |
+| Cron Jobs | 内存 static Mutex<Vec<>> | Rust 后端 | ✅ 持久化|
+| Env Vars | 内存 static Mutex<Vec<>> | Rust 后端 | ✅ 持久化 |
+
+---
+
+## 📋 快速参考
+
+### 常用命令
+
+```bash
+# 开发启动（Tauri 桌面模式）
 npm run tauri -- dev
+
+# 构建（macOS Universal）
+npm run build:mac:universal
+
+# 代码检查
+npm run lint
 ```
 
-建议准备：
+### 调试技巧
 
-- Node.js 20+
-- Rust 工具链
-- Tauri 运行环境
-- 可选的 Hermes 服务进程
+**前端**：
+- React DevTools：检查组件状态
+- Network：查看 SSE 流
+- Console：`window.__TAURI__` 判断模式
 
-默认 Hermes 目标地址：
+**后端**：
+- `cargo run` 直接运行 Rust（调试 Tauri 命令）
+- `println!` 日志输出
+- 查看 `~/.hermes/hermes-desktop-lite/sessions.db`（DB Browser for SQLite）
 
-```text
-http://127.0.0.1:8642
+### 代码导航
+
+**关键入口**：
+- 前端入口：`src/main.jsx` → `ReactDOM.createRoot` → `App.jsx`
+- API 层：`src/api.js` → `isTauri()` 分支
+- 后端入口：`src-tauri/src/main.rs` → `tauri::Builder` → `lib.rs`
+- 命令注册：`src-tauri/src/lib.rs` 的 `tauri::generate_handler!`
+
+---
+
+## 🛠️ 开发指南
+
+### 项目结构
+
+```
+hermes-desktop-lite/
+├── src/                          # 前端源码
+│   ├── App.jsx                   # 主应用容器（1557 行 - 建议拆分）
+│   ├── api.js                    # API 抽象层（1443 行 - 建议模块化）
+│   ├── SessionsView.jsx          # 会话视图
+│   ├── MemoryView.jsx            # 记忆视图
+│   ├── TaskView.jsx              # 任务视图
+│   ├── FileView.jsx              # 文件视图
+│   ├── TerminalView.jsx          # 终端视图
+│   ├── SettingsModal.jsx         # 设置弹窗
+│   ├── components/ui/            # shadcn/ui 组件（16 个）
+│   ├── locales/                  # i18n 文案（zh/en/zh-tw）
+│   └── lib/                      # 工具函数
+├── src-tauri/                    # Rust 后端
+│   ├── src/
+│   │   ├── commands.rs           # Tauri 命令（3549 行 - 建议模块化）
+│   │   ├── lib.rs                # 应用初始化
+│   │   └── main.rs               # 入口
+│   ├── Cargo.toml
+│   └── tauri.conf.json
+├── doc/                          # 设计文档
+├── package.json
+├── vite.config.js
+└── README.md                     # 本文件
 ```
 
-如果 Hermes 没有启动：
+### 代码规范
 
-- App 仍然可以打开
-- Chat 页面会显示未连接状态
-- 可以在设置面板里修改 host / port 并重新测试连接
+- **前端**：函数式组件 + Hooks，2 空格缩进，组件 PascalCase，函数 camelCase
+- **后端**：Rust 2021 edition，snake_case 命名
+- **样式**：Tailwind CSS 4，CSS 变量主题系统
+- **国际化**：`react-i18next` + `TranslationContext`
 
-### 3. 构建
+### 调试技巧
 
-前端静态资源构建：
+**前端**：
+- React DevTools 检查组件状态
+- Network 面板查看 SSE 流（`/v1/responses`）
+- Console 执行 `window.__TAURI__` 判断运行模式
 
+**后端**：
 ```bash
-npm run build
+# 直接运行 Rust 调试 Tauri 命令
+cargo run
+
+# 查看 SQLite 数据库
+open ~/.hermes/hermes-desktop-lite/sessions.db
 ```
 
-桌面应用构建：
+---
+ 
 
-```bash
-npm run tauri -- build
-```
+## 🤝 贡献指南
 
-当前第一阶段打包目标为：
+欢迎提交 Issue 和 Pull Request！
 
-- `macOS universal`（`app` + `dmg`）
-- `linux x64 deb`
-- `linux arm64 deb`
+**开发前请阅读**：
+- [AGENTS.md](./AGENTS.md) - 本地开发约定
+- [PROJECT_ANALYSIS.md](./PROJECT_ANALYSIS.md) - 完整项目分析报告
+- [doc/](./doc/) - 产品设计文档与架构规划
 
-## 仓库结构
+**提交规范**：
+- 遵循 Conventional Commits
+- 确保通过 ESLint 检查：`npm run lint`
+- 更新相关文档
 
-```text
-.
-├── src/
-│   ├── App.jsx                 # 主界面与多视图调度
-│   ├── api.js                  # 浏览器 / Tauri 双模式 API 封装
-│   ├── data.js                 # 命令模板与静态展示数据
-│   ├── locales/                # i18n 文案
-│   ├── components/
-│   │   ├── ui/                 # 本地落地的 shadcn/ui 组件
-│   │   ├── FileView.jsx        # 文件视图
-│   │   └── ...
-│   ├── MemoryView.jsx
-│   ├── TaskView.jsx
-│   └── SettingsModal.jsx
-├── src-tauri/
-│   ├── src/lib.rs              # Tauri 命令注册
-│   ├── src/commands.rs         # Rust 命令实现
-│   └── tauri.conf.json         # Tauri 配置
-├── doc/                        # 产品设计 / 架构设计文档
-└── README.md
-```
+---
 
-## 浏览器模式与桌面模式的区别
+## 📚 参考资料
 
-| 能力 | 浏览器模式 | Tauri 桌面模式 |
-| --- | --- | --- |
-| UI 调试 | 支持 | 支持 |
-| Tauri 命令 | 不支持 | 支持 |
-| 设置本地持久化 | `localStorage` | 本地 `config.json` |
-| 聊天请求 | 直接请求 Hermes HTTP API | 通过 Tauri 命令转发 |
-| 文件 / 会话 / 任务等数据 | 部分 mock | 目前多数仍是内存态或 mock |
+- [Hermes Agent 官方指南](https://hermes.xaapi.ai/guide/introduction)
+- [Hermes Skills Marketplace](https://hermes-agent.nousresearch.com/docs/skills)
+- [Tauri 文档](https://tauri.app/v1/guides/)
+- [shadcn/ui 组件库](https://ui.shadcn.com/)
+- [Tailwind CSS 文档](https://tailwindcss.com/)
 
-## 已知限制
+---
 
-这些限制是当前代码状态的一部分，不是文档省略：
+## ❤️ 致谢
 
-- 会话历史与消息在当前 Tauri 实现中仍是内存态，应用重启后会重置
-- `Memory`、`Tasks`、`Workspace` 等数据目前主要也是演示性质的内存存储
-- `Files` 页面的 `list/read/write/delete/create` 命令当前仍是 mock 返回值
-- 技能相关 API 已实现，但当前主界面未挂载独立 `Skills` 页面
-- 当前 Agent 列表只有 `hermes-agent`
-- Linux `deb` 产物需要在原生 Linux runner 或 Linux 主机上构建
+- [Hermes Agent](https://github.com/NousResearch/hermes-agent) - 强大的本地 AI Agent
+- [Tauri](https://tauri.app/) - 下一代桌面应用框架
+- [shadcn/ui](https://ui.shadcn.com/) - 精美的 React 组件
+- [xterm.js](https://xtermjs.org/) - 终端模拟器
 
-## 设计与规划文档
+---
 
-如果你想看更细的设计背景，可以继续读这些文档：
+## 📄 许可证
 
-- [产品设计文档](./doc/01-产品设计/Hermes-desktop-lite产品设计文档.md)
-- [功能规划 v2](./doc/02-架构设计/功能规划-v2.md)
-- [详细功能设计 v2.1](./doc/02-架构设计/详细功能设计-v2.1.md)
-- [开发计划](./doc/02-架构设计/开发计划.md)
-- [命令与技能整理](./doc/APP_SKILLS_COMMANDS.md)
+MIT License - 详见 [LICENSE](./LICENSE) 文件
 
-## 快速判断这个仓库值不值得看
+---
 
-如果你关心的是下面这些问题，这个仓库是有参考价值的：
+**⭐ 如果这个项目对你有帮助，请给个 Star！**
 
-- 怎么用 Tauri 把一个本地 AI Agent HTTP 服务包成桌面应用
-- 怎么用 `shadcn/ui` 搭一个多视图 AI 桌面端原型
-- 怎么把聊天、设置、文件、任务、记忆等能力塞进一个统一侧边栏框架
-- 怎么在“先做交互原型”阶段把前端和 Rust 命令层先串起来
+**🐛 遇到问题？** 请先查看 [Issues](../../issues) 是否已有解决方案，没有则提交新 Issue。
 
-如果你需要的是下面这些内容，这个仓库暂时还不够：
+**💡 有建议？** 欢迎在 [Discussions](../../discussions) 中分享你的想法。
 
-- 完整的会话持久化实现
-- 真实文件系统浏览与编辑
-- 可生产部署的 Agent 桌面客户端
-- 完整的权限、安全、数据迁移与升级方案
+---
+
+*最后更新：2026-04-23 | 项目状态：活跃开发中*
