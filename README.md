@@ -16,29 +16,33 @@
 
 <div align="center">
 
-**主界面（聊天视图）** | **侧边栏导航** | **文件管理** | **终端集成**
+**聊天界面** | **会话列表** | **文件管理** | **终端集成**
 :---:|:---:|:---:|:---:
-<img src="screenshots/chat-view.png" width="300" alt="聊天视图"> | <img src="screenshots/sidebar.png" width="300" alt="侧边栏"> | <img src="screenshots/files.png" width="300" alt="文件管理"> | <img src="screenshots/terminal.png" width="300" alt="终端">
+<img src="screenshots/chat-full.png" width="300" alt="聊天界面"> | <img src="screenshots/sessions.png" width="300" alt="会话列表"> | <img src="screenshots/files.png" width="300" alt="文件管理"> | <img src="screenshots/terminal.png" width="300" alt="终端">
 
-**设置面板** | **日志管理** | **快捷指令查看** | **Cron 调度**
-<img src="screenshots/settings.png" width="300" alt="设置"> | <img src="screenshots/memory.png" width="300" alt="记忆"> | <img src="screenshots/tasks.png" width="300" alt="任务"> | <img src="screenshots/cron.png" width="300" alt="Cron">
+**工作区管理** | **任务看板** | **Cron 调度** | **Hermes 指令**
+:---:|:---:|:---:|:---:
+<img src="screenshots/workspace-manager.png" width="300" alt="工作区管理"> | <img src="screenshots/tasks.png" width="300" alt="任务管理"> | <img src="screenshots/cron.png" width="300" alt="Cron 作业"> | <img src="screenshots/commands.png" width="300" alt="Hermes 指令">
 
 </div>
 
-> **提示**：以上为截图占位符，请将实际截图放置于 `screenshots/` 目录，并确保文件名匹配。
 
 ---
 
 ## ✨ 核心功能（7 大侧边栏模块）
 
+## 🔄 工作区切换
+
 ### 1. 💬 当前会话（Chat）
-流式对话、Markdown 渲染、代码高亮、工具调用可视化、附件支持、上下文自动裁剪。
+流式对话、Markdown 渲染、代码高亮、工具调用可视化、附件支持、上下文自动裁剪。  
+**新增**：AI 思考过程独立显示（thinking 模式推理链可视化）。
 
 ### 2. 📚 会话列表（Sessions）
-历史会话管理：创建、切换、重命名、删除、置顶、搜索。数据持久化到 SQLite。
+历史会话管理：创建、切换、重命名、删除、置顶、搜索。数据持久化到 SQLite。  
+**新增**：会话摘要自动生成，快速回忆对话内容。
 
 ### 3. ⏰ 定时任务（Cron）
-Cron 作业列表、创建/删除、表达式支持。 
+Cron 作业列表、创建/删除、表达式支持。⚠️ 调度执行逻辑待开发。
 
 ### 4. 📂 文件管理（Files）
 文件树浏览、预览（代码高亮）、编辑（Tauri 模式）、新建/重命名/删除。
@@ -46,9 +50,33 @@ Cron 作业列表、创建/删除、表达式支持。
 ### 5. 💻 终端操作（Terminal）
 xterm.js 集成 + PTY 会话，支持 bash/zsh/sh，交互式 Shell 命令。
 
+### 6. ✅ 任务管理（Tasks）
+TODO/IN_PROGRESS/DONE 状态流转、进度统计、增删改。⚠️ 数据未持久化。
 
 ### 7. 📖 Hermes 指令（Commands）
 内置命令参考手册，分类浏览、搜索、一键复制。
+
+---
+
+## 🔄 工作区切换
+
+这是应用的核心设计模式。
+
+通过 `WorkspaceSwitcher` 组件（侧边栏底部）或设置中的工作区管理，你可以创建、切换、删除工作区。
+
+**切换工作区时，所有状态同步切换**：
+- 会话列表 → 过滤到当前工作区的会话
+- 文件浏览 → 自动定位到工作区目录
+- 终端 → cwd 自动切换到工作区路径
+- 任务、Cron、Env、Memory → 按工作区隔离存储
+
+**实现原理**：
+- 工作区列表存储在 `~/.hermes/hermes-desktop-lite/config.json` 中
+- 每个工作区包含 `id`、`name`、`path`、`icon` 字段
+- 前端状态：`App.jsx` 的 `currentWorkspace` 和 `workspaces`
+- 后端命令：`get_workspaces`、`switch_workspace`、`create_workspace` 等（`commands.rs`）
+
+这相当于为每个项目创建了一个**独立的本地沙箱**。
 
 ---
 
@@ -114,7 +142,7 @@ flowchart LR
 
 ```bash
 # 克隆仓库
-git clone https://github.com/8187735/hermes-desktop-lite.git
+git clone https://github.com/your-username/hermes-desktop-lite.git
 cd hermes-desktop-lite
 
 # 安装依赖
@@ -148,37 +176,6 @@ npm run build:mac:universal
 **后续平台支持**：
 - Linux（x64/ARM64 DEB）—— 开发完成后提供
 - Windows（MSI/EXE）—— 视情况支持
-
----
-
-## 🎯 功能状态
-
-| 模块 | 状态 | 说明 |
-|------|------|------|
-| 💬 当前会话（Chat） | ✅ 完整 | 流式响应、Markdown、工具可视化、上下文管理 |
-| 📚 会话列表（Sessions） | ✅ 完整 | CRUD、置顶、搜索、SQLite 持久化 |
-| ⏰ 定时任务（Cron） | ⚠️ UI 完整 | 列表/创建/删除已完成，调度执行未实现 |
-| 📂 文件管理（Files） | ✅ 完整（Tauri） | 浏览/预览/编辑/删除，浏览器模式为 Stub |
-| 💻 终端操作（Terminal） | ✅ 完整 | xterm.js + PTY 会话，支持交互式 Shell |
-| ✅ 任务管理（Tasks） | ⚠️ UI 完整 | 状态流转、进度统计，数据未持久化 |
-| 📖 Hermes 指令（Commands） | ✅ 完整 | 命令参考手册，分类浏览 + 搜索 |
-| ⚙️ 设置面板（Settings） | ✅ 完整 | 主题/语言/网关/Agent 配置 |
-| 🔌 模型选择（Model Selector） | ✅ 可用 | 聊天右上角下拉菜单选择模型（配置在 Hermes 环境变量） |
-
-
----
-
-## 📊 数据持久化状态总览
-
-| 数据类型 | 存储方式 | 位置 | 状态 |
-|---------|---------|------|------|
-| 会话（Sessions） | SQLite | `~/.hermes/hermes-desktop-lite/sessions.db` | ✅ 持久化 |
-| 消息（Messages） | SQLite（关联会话） | 同上 | ✅ 持久化 |
-| 配置（Config） | JSON 文件 | `~/.hermes/hermes-desktop-lite/config.json` | ✅ 持久化 |
-| Cron Jobs | 内存 static Mutex<Vec<>> | Rust 后端 | ✅ 持久化|
-| Env Vars | 内存 static Mutex<Vec<>> | Rust 后端 | ✅ 持久化 |
-
----
 
 ## 📋 快速参考
 
@@ -224,28 +221,32 @@ npm run lint
 ```
 hermes-desktop-lite/
 ├── src/                          # 前端源码
-│   ├── App.jsx                   # 主应用容器（1557 行 - 建议拆分）
-│   ├── api.js                    # API 抽象层（1443 行 - 建议模块化）
-│   ├── SessionsView.jsx          # 会话视图
-│   ├── MemoryView.jsx            # 记忆视图
-│   ├── TaskView.jsx              # 任务视图
-│   ├── FileView.jsx              # 文件视图
-│   ├── TerminalView.jsx          # 终端视图
-│   ├── SettingsModal.jsx         # 设置弹窗
-│   ├── components/ui/            # shadcn/ui 组件（16 个）
+│   ├── App.jsx                   # 根组件（状态管理 + 路由）
+│   ├── api.js                    # Hermes API 抽象层
+│   ├── components/               # UI 组件
+│   │   ├── ChatWorkspace.jsx     # 聊天主视图
+│   │   ├── SessionsView.jsx      # 会话列表
+│   │   ├── FilesView.jsx         # 文件管理
+│   │   ├── TerminalView.jsx      # 终端
+│   │   ├── TasksView.jsx         # 任务管理
+│   │   ├── CronView.jsx          # 定时任务
+│   │   ├── CommandsView.jsx      # Hermes 指令
+│   │   ├── SettingsModal.jsx     # 设置弹窗
+│   │   ├── WorkspaceSwitcher.jsx # 工作区切换器
+│   │   └── WorkspaceManagerDialog.jsx # 工作区管理弹窗
 │   ├── locales/                  # i18n 文案（zh/en/zh-tw）
 │   └── lib/                      # 工具函数
 ├── src-tauri/                    # Rust 后端
 │   ├── src/
-│   │   ├── commands.rs           # Tauri 命令（3549 行 - 建议模块化）
+│   │   ├── commands.rs           # Tauri 命令（后续模块化）
 │   │   ├── lib.rs                # 应用初始化
 │   │   └── main.rs               # 入口
 │   ├── Cargo.toml
 │   └── tauri.conf.json
-├── doc/                          # 设计文档
+├── screenshots/                  # 应用截图
 ├── package.json
 ├── vite.config.js
-└── README.md                     # 本文件
+└── README.md
 ```
 
 ### 代码规范
@@ -272,7 +273,14 @@ open ~/.hermes/hermes-desktop-lite/sessions.db
 ```
 
 ---
- 
+
+## 📋 已知限制
+
+⚠️ **重要提醒**：
+
+1. **平台支持范围**
+   - 当前版本优先支持 **macOS**
+   - Linux 和 Windows 将在后续版本提供
 
 ## 🤝 贡献指南
 
