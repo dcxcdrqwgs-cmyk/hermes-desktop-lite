@@ -2029,11 +2029,11 @@ function MainViewHeader({
                   className="rounded-[0.9rem] border-border/75 bg-background/88 px-3.5">
                   <CpuIcon className="size-4" />
                   <span className="flex max-w-[14rem] flex-col items-start leading-tight">
-                    <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                      {t("app.modelSwitchLabel")}
-                    </span>
                     <span className="max-w-[14rem] truncate text-[12px] font-medium text-foreground">
                       {currentConversationModel || t("app.modelSelectorFallback")}
+                    </span>
+                    <span className="text-[10px] font-medium tracking-[0.04em] text-muted-foreground">
+                      {t("app.modelSwitchLabel")}
                     </span>
                   </span>
                 </Button>
