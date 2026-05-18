@@ -23,20 +23,20 @@
 ## 📸 应用预览
 
 ### 🏠 首页 & 💬 对话
-![首页](https://gitee.com/8187735/Hermes-Slate-Desk/raw/master/screenshots/home.png)
-![对话](https://gitee.com/8187735/Hermes-Slate-Desk/raw/master/screenshots/chat.png)
+![首页](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/home.png)
+![对话](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/chat.png)
 
 ### 📝 AI 笔记 & ⏰ 定时任务
-![AI笔记](https://gitee.com/8187735/Hermes-Slate-Desk/raw/master/screenshots/notebook.png)
-![定时任务](https://gitee.com/8187735/Hermes-Slate-Desk/raw/master/screenshots/cron.png)
+![AI笔记](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/notebook.png)
+![定时任务](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/cron.png)
 
 ### 📂 文件管理 & 💻 终端
-![文件管理](https://gitee.com/8187735/Hermes-Slate-Desk/raw/master/screenshots/files.png)
-![终端](https://gitee.com/8187735/Hermes-Slate-Desk/raw/master/screenshots/terminal.png)
+![文件管理](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/files.png)
+![终端](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/terminal.png)
 
 ### ⚙️ Hermes 设置 & 🔧 应用设置
-![Hermes设置](https://gitee.com/8187735/Hermes-Slate-Desk/raw/master/screenshots/hermes-settings.png)
-![应用设置](https://gitee.com/8187735/Hermes-Slate-Desk/raw/master/screenshots/settings.png)
+![Hermes设置](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/hermes-settings.png)
+![应用设置](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/settings.png)
 
 > 📁 截图目录：`screenshots/` | 推荐尺寸：1200×800px
 
