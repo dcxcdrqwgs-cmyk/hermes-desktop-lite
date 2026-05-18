@@ -26,53 +26,63 @@
 
 | 功能模块 | 截图预览 |
 |:------:|:------:|
-| **💬 聊天界面** | `screenshots/chat-full.png` |
-| **📚 会话列表** | `screenshots/sessions.png` |
+| **🏠 首页** | `screenshots/home.png` |
+| **💬 对话** | `screenshots/chat.png` |
+| **📝 AI 笔记** | `screenshots/notebook.png` |
+| **⏰ 定时任务** | `screenshots/cron.png` |
 | **📂 文件管理** | `screenshots/files.png` |
-| **💻 终端集成** | `screenshots/terminal.png` |
-| **🏢 工作区管理** | `screenshots/workspace-manager.png` |
-| **✅ 任务看板** | `screenshots/tasks.png` |
-| **⏰ Cron 调度** | `screenshots/cron.png` |
-| **📖 Hermes 指令** | `screenshots/commands.png` |
-| **⚙️ 设置面板** | `screenshots/settings.png` |
-| **🌐 模型配置** | `screenshots/model-config.png` |
-| **🔍 分析面板** | `screenshots/analytics.png` |
-| **🧠 记忆管理** | `screenshots/memory.png` |
+| **💻 终端** | `screenshots/terminal.png` |
+| **⚙️ Hermes 设置** | `screenshots/hermes-settings.png` |
+| **🔧 应用设置** | `screenshots/settings.png` |
 
 ---
 
 ## ✨ 核心功能
 
-### 🎯 7 大侧边栏模块
+### 🎯 8 大侧边栏模块
 
-#### 1. 💬 当前会话（Chat）
+#### 1. 🏠 首页（Home）
+
+应用仪表盘，快速概览与导航。
+
+- 工作区快速切换
+- 最近会话快捷访问
+- 常用功能入口
+- 实时状态显示
+
+#### 2. 💬 对话（Chat）
 
 流式对话、Markdown 渲染、代码高亮、工具调用可视化、附件支持、上下文自动裁剪。
 
-**新增特性**：
+**特性**：
 - AI 思考过程独立显示（thinking 模式推理链可视化）
 - 实时流式响应
 - 附件拖拽上传
 - 上下文智能裁剪
+- 多模型切换
 
-#### 2. 📚 会话列表（Sessions）
+#### 3. 📝 AI 笔记（Notebook）
 
-历史会话管理：创建、切换、重命名、删除、置顶、搜索。数据持久化到 SQLite。
+Markdown 笔记本，与 AI 对话深度集成。
 
-**新增特性**：
-- 会话摘要自动生成
-- 快速回忆对话内容
-- 智能搜索过滤
+- Milkdown 编辑器（支持数学公式、代码高亮、流程图）
+- AI 辅助写作与优化
+- 实时预览
+- 一键导出（DOCX/Markdown）
+- 对话内容保存到笔记
+- Mermaid 图表支持
 
-#### 3. ⏰ 定时任务（Cron）
+#### 4. ⏰ 定时任务（Cron）
 
-Cron 作业管理：创建、编辑、删除、启用/禁用、表达式可视化配置。
+Cron 作业管理，让你的 AI 工作自动化。
 
 - 图形化 Cron 表达式编辑
+- 创建/编辑/删除/启用/禁用
 - 执行历史记录
 - 通知提醒
+- 表达式可视化验证
 
-#### 4. 📂 文件管理（Files）
+#### 5. 📂 文件管理（Files）
 
 文件树浏览、预览、编辑一站式解决方案。
 
@@ -80,8 +90,9 @@ Cron 作业管理：创建、编辑、删除、启用/禁用、表达式可视�
 - Tauri 原生文件编辑
 - 新建/重命名/删除/移动
 - 多标签页编辑
+- 拖拽上传
 
-#### 5. 💻 终端操作（Terminal）
+#### 6. 💻 终端（Terminal）
 
 xterm.js 集成 + PTY 会话，原生终端体验。
 
@@ -89,24 +100,26 @@ xterm.js 集成 + PTY 会话，原生终端体验。
 - 交互式 Shell 命令
 - 多终端标签页
 - 终端分屏
+- 命令历史
 
-#### 6. ✅ 任务管理（Tasks）
+#### 7. ⚙️ Hermes 设置
 
-可视化任务看板，状态流转一目了然。
+集中管理 Hermes Agent 各项配置。
 
-- 三态流转：TODO → IN_PROGRESS → DONE
-- 进度统计图表
-- 增删改查完整功能
-- 拖拽排序
+- Agent 管理与切换
+- 技能（Skills）市场
+- 记忆（Memory）管理
+- 频道（Channels）配置
+- 提示词模板（Prompt Templates）
+- 分析面板（Analytics）
 
-#### 7. 📖 Hermes 指令（Commands）
+#### 8. 🔧 应用设置（Settings）
 
-内置命令参考手册，效率提升利器。
+个性化你的桌面客户端。
 
-- 分类浏览
-- 关键词搜索
-- 一键复制
-- 命令预览
+- Hermes Gateway 连接配置 + 连接测试
+- 主题切换（亮色 / 暗色 / 跟随系统）
+- 语言切换（中文 / English / 繁體中文）
 
 ---
 
@@ -329,26 +342,39 @@ hermes-slate-desk/
 ├── src/                              # 前端源码
 │   ├── App.jsx                       # 根组件（状态管理 + 路由）
 │   ├── AppInner.jsx                  # 主视图容器
+│   ├── HomeView.jsx                  # 首页
+│   ├── SessionsView.jsx              # 会话列表
+│   ├── ModelConfigPage.jsx           # 模型配置
+│   ├── SettingsModal.jsx             # 应用设置
+│   ├── TerminalView.jsx              # 终端
+│   ├── CronView.jsx                  # 定时任务
+│   ├── NotebookView.jsx              # AI 笔记
+│   ├── MemoryView.jsx                # 记忆管理
 │   ├── api.js                        # Hermes API 抽象层
 │   ├── components/                   # UI 组件
 │   │   ├── ChatMessage.jsx           # 聊天消息
 │   │   ├── InputArea.jsx             # 输入区域
 │   │   ├── MessageList.jsx           # 消息列表
 │   │   ├── FileTreePanel.jsx         # 文件树
-│   │   ├── TerminalView.jsx          # 终端视图
-│   │   ├── CronView.jsx              # Cron 视图
-│   │   ├── MemoryView.jsx            # 记忆视图
-│   │   ├── SettingsModal.jsx         # 设置弹窗
+│   │   ├── FileView.jsx              # 文件管理视图
+│   │   ├── TaskProgressTracker.jsx   # 任务进度追踪
+│   │   ├── TaskStepTracker.jsx       # 任务步骤追踪
 │   │   ├── WorkspaceSwitcher.jsx     # 工作区切换器
 │   │   ├── HermesSubmenu.jsx         # Hermes 子菜单
-│   │   └── hermes/                   # Hermes 集成模块
-│   │       ├── hermes-ui.jsx         # Hermes UI
-│   │       ├── AgentsPage.jsx        # Agent 列表
-│   │       ├── AnalyticsPage.jsx     # 分析面板
-│   │       ├── ChannelsPage.jsx      # 频道管理
-│   │       ├── MemoryPage.jsx        # 记忆管理
-│   │       ├── SkillsPage.jsx       # Skills 市场
-│   │       └── PromptTemplatesPage.jsx # 提示词模板
+│   │   ├── notebook/                # 笔记本组件
+│   │   │   ├── NotebookEditorPage.jsx
+│   │   │   ├── NotebookMilkdownEditor.jsx
+│   │   │   ├── NotebookPreview.jsx
+│   │   │   └── NotebookTreePanel.jsx
+│   │   ├── hermes/                 # Hermes 设置模块
+│   │   │   ├── hermes-ui.jsx         # Hermes UI 入口
+│   │   │   ├── AgentsPage.jsx        # Agent 管理
+│   │   │   ├── AnalyticsPage.jsx     # 分析面板
+│   │   │   ├── ChannelsPage.jsx      # 频道管理
+│   │   │   ├── MemoryPage.jsx        # 记忆管理
+│   │   │   ├── SkillsPage.jsx        # Skills 市场
+│   │   │   └── PromptTemplatesPage.jsx # 提示词模板
+│   │   └── ui/                      # shadcn/ui 组件
 │   ├── locales/                      # i18n 文案
 │   │   ├── zh.json                   # 中文
 │   │   ├── en.json                   # English
