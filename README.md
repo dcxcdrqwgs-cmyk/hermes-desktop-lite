@@ -22,23 +22,21 @@
 
 ## 📸 Screenshots
 
-### 🏠 Home & 💬 Chat
-![Home](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/home.png)
-![Chat](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/chat.png)
+<div align="center">
 
-### 📝 AI Notebook & ⏰ Scheduled Tasks
-![Notebook](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/notebook.png)
-![Cron](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/cron.png)
+### 🏠 Home | 💬 Chat
+![Home](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/home.png) · ![Chat](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/chat.png)
 
-### 📂 File Manager & 💻 Terminal
-![Files](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/files.png)
-![Terminal](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/terminal.png)
+### 📝 AI Notebook | ⏰ Scheduled Tasks
+![Notebook](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/notebook.png) · ![Cron](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/cron.png)
 
-### ⚙️ Hermes Settings & 🔧 App Settings
-![Hermes Settings](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/hermes-settings.png)
-![App Settings](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/settings.png)
+### 📂 File Manager | 💻 Terminal
+![Files](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/files.png) · ![Terminal](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/terminal.png)
 
-> 📁 Screenshots directory: `screenshots/` | Recommended size: 1200×800px
+### ⚙️ Hermes Settings | 🔧 App Settings
+![Hermes Settings](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/hermes-settings.png) · ![App Settings](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/settings.png)
+
+</div>
 
 ---
 
