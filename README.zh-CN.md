@@ -22,21 +22,24 @@
 
 ## 📸 应用预览
 
-<div align="center">
-
-### 🏠 首页 | 💬 对话
-![首页](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/home.png) · ![对话](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/chat.png)
-
-### 📝 AI 笔记 | ⏰ 定时任务
-![AI笔记](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/notebook.png) · ![定时任务](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/cron.png)
-
-### 📂 文件管理 | 💻 终端
-![文件管理](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/files.png) · ![终端](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/terminal.png)
-
-### ⚙️ Hermes 设置 | 🔧 应用设置
-![Hermes设置](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/hermes-settings.png) · ![应用设置](https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/settings.png)
-
-</div>
+<table>
+<tr>
+<td><b>🏠 首页</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/home.png" width="400"/></td>
+<td><b>💬 对话</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/chat.png" width="400"/></td>
+</tr>
+<tr>
+<td><b>📝 AI 笔记</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/notebook.png" width="400"/></td>
+<td><b>⏰ 定时任务</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/cron.png" width="400"/></td>
+</tr>
+<tr>
+<td><b>📂 文件管理</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/files.png" width="400"/></td>
+<td><b>💻 终端</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/terminal.png" width="400"/></td>
+</tr>
+<tr>
+<td><b>⚙️ Hermes 设置</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/hermes-settings.png" width="400"/></td>
+<td><b>🔧 应用设置</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/settings.png" width="400"/></td>
+</tr>
+</table>
 
 ---
 
