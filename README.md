@@ -24,20 +24,20 @@
 
 <table>
 <tr>
-<td><b>🏠 Home</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/home.png" width="400"/></td>
-<td><b>💬 Chat</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/chat.png" width="400"/></td>
+<td><b>🏠 Home</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/home-en.png" width="400"/></td>
+<td><b>💬 Chat</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/chat-en.png" width="400"/></td>
 </tr>
 <tr>
-<td><b>📝 AI Notebook</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/notebook.png" width="400"/></td>
-<td><b>⏰ Scheduled Tasks</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/cron.png" width="400"/></td>
+<td><b>📝 AI Notebook</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/notebook-en.png" width="400"/></td>
+<td><b>⏰ Scheduled Tasks</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/cron-en.png" width="400"/></td>
 </tr>
 <tr>
-<td><b>📂 File Manager</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/files.png" width="400"/></td>
-<td><b>💻 Terminal</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/terminal.png" width="400"/></td>
+<td><b>📂 File Manager</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/files-en.png" width="400"/></td>
+<td><b>💻 Terminal</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/terminal-en.png" width="400"/></td>
 </tr>
 <tr>
-<td><b>⚙️ Hermes Settings</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/hermes-settings.png" width="400"/></td>
-<td><b>🔧 App Settings</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/settings.png" width="400"/></td>
+<td><b>⚙️ Hermes Settings</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/hermes-settings-en.png" width="400"/></td>
+<td><b>🔧 App Settings</b><br/><img src="https://gitee.com/8187735/Hermes-Slate-Desk/raw/main/screenshots/settings-en.png" width="400"/></td>
 </tr>
 </table>
 
