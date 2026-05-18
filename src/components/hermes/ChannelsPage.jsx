@@ -720,17 +720,6 @@ export default function ChannelsPage() {
             ) : qrDialog.error ? (
               <div className="text-[13px] text-rose-600 dark:text-rose-300">{qrDialog.error}</div>
             ) : qrDialog.mode === "qqbot" ? (
-                    </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-muted-foreground">Base URL</span>
-                      <span className="truncate font-mono text-foreground">
-                        {qrDialog.credentials.baseUrl}
-                      </span>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            ) : qrDialog.mode === "qqbot" ? (
               <div className="space-y-4">
                 <div className="flex flex-col items-center gap-3">
                   {qqbotQrImageSrc ? (

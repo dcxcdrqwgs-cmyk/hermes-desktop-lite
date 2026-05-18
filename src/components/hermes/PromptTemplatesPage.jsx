@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { ViewFrame } from "@/components/view-frame"
-import { useI18n } from "@/i18n"
 import { cn } from "@/lib/utils"
 
 const TEMPLATE_CATEGORIES = [
@@ -191,7 +190,6 @@ function itemMatchesQuery(item, query) {
 }
 
 function TemplateCard({ template, onUse, onPreview }) {
-  const { t } = useI18n()
   const isPaid = template.type === "paid"
 
   return (
@@ -288,7 +286,6 @@ function TemplateCard({ template, onUse, onPreview }) {
 }
 
 export default function PromptTemplatesPage() {
-  const { t } = useI18n()
   const [activeCategory, setActiveCategory] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("free")
