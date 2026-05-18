@@ -2,7 +2,7 @@
 
 # Hermes Slate Desk
 
-**Hermes AI Agent 的现代化桌面客户端**
+**A Modern Desktop Client for Hermes AI Agent**
 
 [![Tauri](https://img.shields.io/badge/Tauri-2.10-4B7BE5?style=flat-square&logo=tauri)](https://tauri.app/)
 [![React](https://img.shields.io/badge/React-19.2-61DAFB?style=flat-square&logo=react)](https://react.dev/)
@@ -12,7 +12,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-FF6B6B?style=flat-square)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-808080?style=flat-square&logo=apple)](https://tauri.app/)
 
-*🤖 基于 Tauri 2 + React 19 构建 | 即开即用的本地 AI 工作站*
+*🤖 Built with Tauri 2 + React 19 | Your ready-to-use local AI workstation*
 
 [**English**](README.md) | [**中文**](README.zh-CN.md)
 
@@ -20,252 +20,251 @@
 
 </div>
 
-## 📸 应用预览
+## 📸 Screenshots
 
-| 🏠 首页 | 💬 对话 | 📝 AI 笔记 | ⏰ 定时任务 |
+| 🏠 Home | 💬 Chat | 📝 AI Notebook | ⏰ Scheduled Tasks |
 |:------:|:------:|:------:|:------:|
 | `screenshots/home.png` | `screenshots/chat.png` | `screenshots/notebook.png` | `screenshots/cron.png` |
 
-| 📂 文件管理 | 💻 终端 | ⚙️ Hermes 设置 | 🔧 应用设置 |
+| 📂 File Manager | 💻 Terminal | ⚙️ Hermes Settings | 🔧 App Settings |
 |:------:|:------:|:------:|:------:|
 | `screenshots/files.png` | `screenshots/terminal.png` | `screenshots/hermes-settings.png` | `screenshots/settings.png` |
 
-> 📁 截图目录：`screenshots/` | 推荐尺寸：1200×800px
+> 📁 Screenshots directory: `screenshots/` | Recommended size: 1200×800px
 
 ---
 
-## ✨ 核心功能
+## ✨ Features
 
-### 🎯 8 大侧边栏模块
+### 🎯 8 Core Sidebar Modules
 
-#### 1. 🏠 首页（Home）
+#### 1. 🏠 Home
 
-应用仪表盘，快速概览与导航。
+Your personal dashboard for quick overview and navigation.
 
-- 工作区快速切换
-- 最近会话快捷访问
-- 常用功能入口
-- 实时状态显示
+- Quick workspace switching
+- Recent sessions at your fingertips
+- Fast access to frequently used features
+- Real-time status display
 
-#### 2. 💬 对话（Chat）
+#### 2. 💬 Chat
 
-流式对话、Markdown 渲染、代码高亮、工具调用可视化、附件支持、上下文自动裁剪。
+Streamlined conversations with AI, rendered beautifully.
 
-**特性**：
-- AI 思考过程独立显示（thinking 模式推理链可视化）
-- 实时流式响应
-- 附件拖拽上传
-- 上下文智能裁剪
-- 多模型切换
+**Highlights**:
+- Dedicated AI thinking process display (thinking mode with reasoning chain visualization)
+- Real-time streaming responses
+- Drag-and-drop file attachments
+- Smart context trimming
+- Switch between multiple models on the fly
 
-#### 3. 📝 AI 笔记（Notebook）
+#### 3. 📝 AI Notebook
 
-Markdown 笔记本，与 AI 对话深度集成。
+Markdown-powered note-taking, deeply integrated with AI conversations.
 
-- Milkdown 编辑器（支持数学公式、代码高亮、流程图）
-- AI 辅助写作与优化
-- 实时预览
-- 一键导出（DOCX/Markdown）
-- 对话内容保存到笔记
-- Mermaid 图表支持
+- Milkdown editor with support for math formulas, code highlighting, and flowcharts
+- AI-assisted writing and polishing
+- Live preview mode
+- One-click export (DOCX/Markdown)
+- Save chat snippets to your notes
+- Mermaid diagram support out of the box
 
-#### 4. ⏰ 定时任务（Cron）
+#### 4. ⏰ Scheduled Tasks (Cron)
 
-Cron 作业管理，让你的 AI 工作自动化。
+Automate your AI workflows with cron jobs.
 
-- 图形化 Cron 表达式编辑
-- 创建/编辑/删除/启用/禁用
-- 执行历史记录
-- 通知提醒
-- 表达式可视化验证
+- Visual cron expression builder
+- Create/edit/delete/enable/disable jobs
+- Execution history tracking
+- Desktop notifications
+- Expression validation at a glance
 
-#### 5. 📂 文件管理（Files）
+#### 5. 📂 File Manager
 
-文件树浏览、预览、编辑一站式解决方案。
+All-in-one file tree browsing, preview, and editing.
 
-- 代码高亮预览（支持 100+ 语言）
-- Tauri 原生文件编辑
-- 新建/重命名/删除/移动
-- 多标签页编辑
-- 拖拽上传
+- Syntax-highlighted code preview (100+ languages supported)
+- Native file editing via Tauri
+- Create/rename/delete/move files
+- Multi-tab editing
+- Drag-and-drop upload
 
-#### 6. 💻 终端（Terminal）
+#### 6. 💻 Terminal
 
-xterm.js 集成 + PTY 会话，原生终端体验。
+Native terminal experience powered by xterm.js + PTY sessions.
 
-- 支持 bash/zsh/sh
-- 交互式 Shell 命令
-- 多终端标签页
-- 终端分屏
-- 命令历史
+- Full bash/zsh/sh support
+- Interactive shell commands
+- Multiple terminal tabs
+- Split-screen terminals
+- Command history
 
-#### 7. ⚙️ Hermes 设置
+#### 7. ⚙️ Hermes Settings
 
-集中管理 Hermes Agent 各项配置。
+Central hub for managing all Hermes Agent configurations.
 
-- Agent 管理与切换
-- 技能（Skills）市场
-- 记忆（Memory）管理
-- 频道（Channels）配置
-- 提示词模板（Prompt Templates）
-- 分析面板（Analytics）
+- Agent management and switching
+- Skills marketplace
+- Memory management
+- Channel configuration
+- Prompt templates library
+- Analytics dashboard
 
-#### 8. 🔧 应用设置（Settings）
+#### 8. 🔧 App Settings
 
-个性化你的桌面客户端。
+Customize your desktop client experience.
 
-- Hermes Gateway 连接配置 + 连接测试
-- 主题切换（亮色 / 暗色 / 跟随系统）
-- 语言切换（中文 / English / 繁體中文）
+- Hermes Gateway connection with live testing
+- Theme switching (light / dark / system)
+- Language switching (Chinese / English / Traditional Chinese)
 
 ---
 
-## 🔄 工作区切换
+## 🔄 Workspace Switching
 
-这是应用的核心设计模式，让每个项目拥有独立的本地沙箱。
+This is the app's core design pattern — giving each project its own isolated local sandbox.
 
-### 功能入口
+### How to Access
 
-- **侧边栏底部**：`WorkspaceSwitcher` 组件
-- **设置面板**：工作区管理弹窗
+- **Sidebar bottom**: `WorkspaceSwitcher` component
+- **Settings panel**: Workspace management dialog
 
-### 切换效果
+### What Happens on Switch
 
-切换工作区时，所有状态同步隔离：
+When you switch workspaces, everything syncs and isolates accordingly:
 
-| 模块 | 切换行为 |
+| Module | Behavior |
 |:-----|:--------|
-| 📚 会话列表 | 自动过滤到当前工作区的会话 |
-| 📂 文件浏览 | 自动定位到工作区目录 |
-| 💻 终端 | cwd 自动切换到工作区路径 |
-| ✅ 任务 | 按工作区隔离存储 |
-| ⏰ Cron | 按工作区隔离存储 |
-| 🧠 Env | 按工作区隔离存储 |
-| 📝 Memory | 按工作区隔离存储 |
+| 📚 Sessions | Auto-filters to current workspace's sessions |
+| 📂 Files | Jumps to workspace directory |
+| 💻 Terminal | cwd automatically changes to workspace path |
+| ⏰ Cron | Isolated storage per workspace |
+| 🧠 Env | Isolated storage per workspace |
+| 📝 Memory | Isolated storage per workspace |
 
-### 实现原理
+### Under the Hood
 
 ```javascript
-// 工作区配置存储
+// Workspace config stored at
 ~/.hermes/hermes-slate-desk/config.json
 
-// 每个工作区包含
+// Each workspace contains
 {
   id: "unique-id",
-  name: "项目名称",
+  name: "Project Name",
   path: "/path/to/project",
   icon: "🚀"
 }
 ```
 
-**核心文件**：
-- 前端状态：`src/App.jsx` 的 `currentWorkspace` 和 `workspaces`
-- 后端命令：`src-tauri/src/commands/workspace.rs`
+**Key files**:
+- Frontend state: `currentWorkspace` and `workspaces` in `src/App.jsx`
+- Backend commands: `src-tauri/src/commands/workspace.rs`
 
 ---
 
-## ⚙️ 设置与模型选择
+## ⚙️ Settings & Model Selection
 
-### 设置面板（Settings Modal）
+### Settings Panel
 
-| 设置项 | 说明 |
+| Setting | Description |
 |:-------|:-----|
-| 🌐 网关配置 | Hermes Gateway 地址/端口 + 连接测试 |
-| 🎨 主题切换 | 亮色 / 暗色 / 跟随系统 |
-| 🌏 语言切换 | 中文 / English / 繁體中文 |
-| 🤖 Agent 选择 | 当前支持 Hermes Agent |
+| 🌐 Gateway Config | Hermes Gateway host/port + connection test |
+| 🎨 Theme | Light / Dark / System |
+| 🌏 Language | Chinese / English / Traditional Chinese |
+| 🤖 Agent | Currently supports Hermes Agent |
 
-### 模型选择
+### Model Selection
 
-聊天界面右上角快速切换：
+Quick switch in the top-right corner of the chat view:
 
-- 选择当前会话使用的模型
-- 显示默认模型
-- 自动从配置读取可用模型列表
+- Select the model for the current session
+- View your default model
+- Auto-loads available models from config
 
-> 💡 **注意**：模型配置（API Key、Base URL 等）通过 Hermes 环境变量管理，客户端不提供敏感信息配置界面。
+> 💡 **Note**: Model credentials (API Key, Base URL, etc.) are managed via Hermes environment variables. The client doesn't handle sensitive configuration.
 
 ---
 
-## 🏗️ 架构设计
+## 🏗️ Architecture
 
-### 技术栈
+### Tech Stack
 
-| 层级 | 技术 | 版本 |
+| Layer | Technology | Version |
 |:-----|:-----|:-----|
-| 桌面框架 | [Tauri](https://tauri.app/) | 2.10.1 |
-| 前端框架 | [React](https://react.dev/) | 19.2.4 |
-| 构建工具 | [Vite](https://vitejs.dev/) | 8.0.4 |
-| UI 组件 | shadcn/ui + Radix UI | 本地落地 |
-| 样式系统 | [Tailwind CSS](https://tailwindcss.com/) | 4.2.2 |
-| 动效库 | [Framer Motion](https://www.framer.com/motion/) | 12.38.0 |
-| 终端 | [xterm.js](https://xtermjs.org/) | 5.3.0 |
-| 图标 | [Lucide React](https://lucide.dev/) | 1.8.0 |
-| 主题 | [next-themes](https://github.com/pacocoursey/next-themes) | 0.4.6 |
-| 通知 | [Sonner](https://sonner.emilkowal.ski/) | 2.0.7 |
-| 后端语言 | [Rust](https://www.rust-lang.org/) | 2021 edition |
+| Desktop Framework | [Tauri](https://tauri.app/) | 2.10.1 |
+| Frontend Framework | [React](https://react.dev/) | 19.2.4 |
+| Build Tool | [Vite](https://vitejs.dev/) | 8.0.4 |
+| UI Components | shadcn/ui + Radix UI | Locally managed |
+| Styling | [Tailwind CSS](https://tailwindcss.com/) | 4.2.2 |
+| Animation | [Framer Motion](https://www.framer.com/motion/) | 12.38.0 |
+| Terminal | [xterm.js](https://xtermjs.org/) | 5.3.0 |
+| Icons | [Lucide React](https://lucide.dev/) | 1.8.0 |
+| Theming | [next-themes](https://github.com/pacocoursey/next-themes) | 0.4.6 |
+| Notifications | [Sonner](https://sonner.emilkowal.ski/) | 2.0.7 |
+| Backend Language | [Rust](https://www.rust-lang.org/) | 2021 edition |
 
-### 平台支持
+### Platform Support
 
 ```
-macOS ✅（优先支持）
+macOS ✅ (Primary)
    ↓
-Windows ✅（完整支持）
+Windows ✅ (Fully supported)
    ↓
-Linux 🔄（后续支持）
+Linux 🔄 (Coming soon)
 ```
 
 ---
 
-## 🚀 快速开始
+## 🚀 Getting Started
 
-### 环境要求
+### Prerequisites
 
 - **Node.js** ≥ 20
-- **Rust**（Tauri 开发必需）
+- **Rust** (required for Tauri development)
 
 ```bash
-# 安装 Rust
+# Install Rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-> 📖 完整系统依赖请参考 [Tauri 官方文档](https://v2.tauri.app/start/prerequisites/)
+> 📖 For full system dependencies, check out [Tauri docs](https://v2.tauri.app/start/prerequisites/)
 
-### 安装与运行
+### Install & Run
 
 ```bash
-# 克隆仓库
+# Clone the repo
 git clone https://gitee.com/8187735/Hermes-Slate-Desk.git
 cd Hermes-Slate-Desk
 
-# 安装依赖
+# Install dependencies
 npm install
 
-# 启动开发模式
+# Start development mode
 npm run tauri dev
 ```
 
-> ⚠️ **前提条件**：
+> ⚠️ **Requirements**:
 > - Node.js ≥ 20
-> - Rust 环境
-> - 本地运行 Hermes Agent（默认端口 8642）
+> - Rust environment
+> - Hermes Agent running locally (default port 8642)
 >
-> 💡 Hermes Gateway 默认地址：`http://127.0.0.1:8642`
+> 💡 Default Hermes Gateway: `http://127.0.0.1:8642`
 >
-> 如果未检测到 Hermes Agent，Chat 页面会显示连接状态，可通过设置面板修改地址。
+> If Hermes Agent isn't detected, the Chat view will show connection status. You can modify the address in Settings.
 
 ---
 
-## 📦 构建发布
+## 📦 Build & Release
 
-### macOS（通用二进制）
+### macOS
 
 ```bash
-# macOS Universal（Intel + Apple Silicon）
+# macOS Universal (Intel + Apple Silicon)
 npm run build:mac:universal
 ```
 
-构建产物位于：`src-tauri/target/release/bundle/`
+Output: `src-tauri/target/release/bundle/`
 
 ### Linux
 
@@ -279,123 +278,123 @@ npm run build:linux:arm64:deb
 
 ### Windows
 
-> 🔜 后续支持
+> 🔜 Coming soon
 
 ---
 
-## 📋 快速参考
+## 📋 Quick Reference
 
-### 常用命令
+### Common Commands
 
 ```bash
-# 开发启动（Tauri 桌面模式）
+# Start development (Tauri desktop mode)
 npm run tauri dev
 
-# 构建发布（macOS Universal）
+# Build for macOS
 npm run build:mac:universal
 
-# 代码检查与修复
+# Lint & fix
 npm run lint
 npm run lint -- --fix
 ```
 
-### 调试技巧
+### Debugging Tips
 
-#### 前端调试
+#### Frontend
 
-| 工具 | 用途 |
+| Tool | Use Case |
 |:-----|:-----|
-| React DevTools | 检查组件状态、Props、Hooks |
-| Network 面板 | 查看 SSE 流（`/v1/responses`） |
-| Console | 执行 `window.__TAURI__` 判断模式 |
+| React DevTools | Inspect component state, props, hooks |
+| Network tab | View SSE streams (`/v1/responses`) |
+| Console | Run `window.__TAURI__` to check mode |
 
-#### 后端调试
+#### Backend
 
 ```bash
-# 直接运行 Rust 调试 Tauri 命令
+# Run Rust directly to debug Tauri commands
 cargo run
 
-# 查看 SQLite 数据库
+# View SQLite database
 open ~/.hermes/hermes-slate-desk/sessions.db
 ```
 
-### 代码导航
+### Code Navigation
 
-| 层级 | 文件路径 |
+| Layer | File Path |
 |:-----|:---------|
-| 前端入口 | `src/main.jsx` → `App.jsx` |
-| API 层 | `src/api.js` → `isTauri()` 分支 |
-| 后端入口 | `src-tauri/src/main.rs` → `lib.rs` |
-| 命令注册 | `src-tauri/src/lib.rs` → `tauri::generate_handler!` |
+| Frontend Entry | `src/main.jsx` → `App.jsx` |
+| API Layer | `src/api.js` → `isTauri()` |
+| Backend Entry | `src-tauri/src/main.rs` → `lib.rs` |
+| Command Registry | `src-tauri/src/lib.rs` → `tauri::generate_handler!` |
 
 ---
 
-## 🛠️ 开发指南
+## 🛠️ Developer Guide
 
-### 项目结构
+### Project Structure
 
 ```
 hermes-slate-desk/
-├── src/                              # 前端源码
-│   ├── App.jsx                       # 根组件（状态管理 + 路由）
-│   ├── AppInner.jsx                  # 主视图容器
-│   ├── HomeView.jsx                  # 首页
-│   ├── SessionsView.jsx              # 会话列表
-│   ├── ModelConfigPage.jsx           # 模型配置
-│   ├── SettingsModal.jsx             # 应用设置
-│   ├── TerminalView.jsx              # 终端
-│   ├── CronView.jsx                  # 定时任务
-│   ├── NotebookView.jsx              # AI 笔记
-│   ├── MemoryView.jsx                # 记忆管理
-│   ├── api.js                        # Hermes API 抽象层
-│   ├── components/                   # UI 组件
-│   │   ├── ChatMessage.jsx           # 聊天消息
-│   │   ├── InputArea.jsx             # 输入区域
-│   │   ├── MessageList.jsx           # 消息列表
-│   │   ├── FileTreePanel.jsx         # 文件树
-│   │   ├── FileView.jsx              # 文件管理视图
-│   │   ├── TaskProgressTracker.jsx   # 任务进度追踪
-│   │   ├── TaskStepTracker.jsx       # 任务步骤追踪
-│   │   ├── WorkspaceSwitcher.jsx     # 工作区切换器
-│   │   ├── HermesSubmenu.jsx         # Hermes 子菜单
-│   │   ├── notebook/                # 笔记本组件
+├── src/                              # Frontend source
+│   ├── App.jsx                       # Root component (state + routing)
+│   ├── AppInner.jsx                  # Main view container
+│   ├── HomeView.jsx                  # Home dashboard
+│   ├── SessionsView.jsx              # Sessions list
+│   ├── ModelConfigPage.jsx           # Model configuration
+│   ├── SettingsModal.jsx             # App settings
+│   ├── TerminalView.jsx              # Terminal
+│   ├── CronView.jsx                  # Scheduled tasks
+│   ├── NotebookView.jsx              # AI notebook
+│   ├── MemoryView.jsx                # Memory management
+│   ├── api.js                        # Hermes API layer
+│   ├── components/                   # UI components
+│   │   ├── ChatMessage.jsx           # Chat message
+│   │   ├── InputArea.jsx             # Input area
+│   │   ├── MessageList.jsx           # Message list
+│   │   ├── FileTreePanel.jsx         # File tree
+│   │   ├── FileView.jsx              # File manager view
+│   │   ├── TaskProgressTracker.jsx   # Task progress tracker
+│   │   ├── TaskStepTracker.jsx       # Task step tracker
+│   │   ├── WorkspaceSwitcher.jsx     # Workspace switcher
+│   │   ├── HermesSubmenu.jsx         # Hermes submenu
+│   │   ├── notebook/                # Notebook components
 │   │   │   ├── NotebookEditorPage.jsx
 │   │   │   ├── NotebookMilkdownEditor.jsx
 │   │   │   ├── NotebookPreview.jsx
 │   │   │   └── NotebookTreePanel.jsx
-│   │   ├── hermes/                 # Hermes 设置模块
-│   │   │   ├── hermes-ui.jsx         # Hermes UI 入口
-│   │   │   ├── AgentsPage.jsx        # Agent 管理
-│   │   │   ├── AnalyticsPage.jsx     # 分析面板
-│   │   │   ├── ChannelsPage.jsx      # 频道管理
-│   │   │   ├── MemoryPage.jsx        # 记忆管理
-│   │   │   ├── SkillsPage.jsx        # Skills 市场
-│   │   │   └── PromptTemplatesPage.jsx # 提示词模板
-│   │   └── ui/                      # shadcn/ui 组件
-│   ├── locales/                      # i18n 文案
-│   │   ├── zh.json                   # 中文
+│   │   ├── hermes/                 # Hermes settings module
+│   │   │   ├── hermes-ui.jsx         # Hermes UI entry
+│   │   │   ├── AgentsPage.jsx        # Agent management
+│   │   │   ├── AnalyticsPage.jsx     # Analytics
+│   │   │   ├── ChannelsPage.jsx      # Channel config
+│   │   │   ├── MemoryPage.jsx        # Memory management
+│   │   │   ├── SkillsPage.jsx        # Skills marketplace
+│   │   │   └── PromptTemplatesPage.jsx # Prompt templates
+│   │   └── ui/                      # shadcn/ui components
+│   ├── locales/                      # i18n translations
+│   │   ├── zh.json                   # Chinese
 │   │   ├── en.json                   # English
-│   │   └── zh-tw.json                # 繁體中文
-│   └── lib/                          # 工具函数
-│       └── utils.js                  # 通用工具
-├── src-tauri/                        # Rust 后端
+│   │   └── zh-tw.json                # Traditional Chinese
+│   └── lib/                          # Utilities
+│       └── utils.js                  # Common utilities
+├── src-tauri/                        # Rust backend
 │   ├── src/
-│   │   ├── main.rs                   # 入口
-│   │   ├── lib.rs                    # 应用初始化
-│   │   └── commands/                 # Tauri 命令模块
+│   │   ├── main.rs                   # Entry point
+│   │   ├── lib.rs                    # App initialization
+│   │   └── commands/                 # Tauri command modules
 │   │       ├── mod.rs
-│   │       ├── agent.rs              # Agent 相关
-│   │       ├── channels.rs           # 频道管理
-│   │       ├── config.rs             # 配置管理
-│   │       ├── memory.rs             # 记忆存储
-│   │       ├── notebook.rs           # 笔记功能
-│   │       ├── session.rs            # 会话管理
-│   │       ├── task.rs               # 任务管理
-│   │       └── workspace.rs          # 工作区管理
+│   │       ├── agent.rs              # Agent commands
+│   │       ├── channels.rs           # Channel management
+│   │       ├── config.rs             # Config management
+│   │       ├── memory.rs             # Memory storage
+│   │       ├── notebook.rs           # Notebook feature
+│   │       ├── session.rs            # Session management
+│   │       ├── task.rs               # Task management
+│   │       └── workspace.rs          # Workspace management
 │   ├── Cargo.toml
 │   └── tauri.conf.json
-├── screenshots/                      # 应用截图（待添加）
-├── public/                           # 静态资源
+├── screenshots/                      # App screenshots
+├── public/                           # Static assets
 │   ├── favicon.svg
 │   └── icons.svg
 ├── package.json
@@ -404,77 +403,77 @@ hermes-slate-desk/
 └── README.md
 ```
 
-### 代码规范
+### Code Conventions
 
-#### 前端规范
+#### Frontend
 
-- **组件**：函数式组件 + Hooks
-- **缩进**：2 空格
-- **命名**：组件 PascalCase，函数/变量 camelCase
-- **导入**：使用 `@` 别名（`@` → `./src`）
+- **Components**: Functional components + Hooks
+- **Indentation**: 2 spaces
+- **Naming**: PascalCase for components, camelCase for functions/variables
+- **Imports**: Use `@` alias (`@` → `./src`)
 
-#### 后端规范
+#### Backend
 
-- **语言**：Rust 2021 edition
-- **命名**：snake_case
-- **错误处理**：Result 类型 + `?` 运算符
+- **Language**: Rust 2021 edition
+- **Naming**: snake_case
+- **Error handling**: Result type + `?` operator
 
-#### 样式规范
+#### Styling
 
-- **框架**：Tailwind CSS 4
-- **主题**：CSS 变量系统 + `next-themes`
-- **组件**：shadcn/ui（本地落地）
+- **Framework**: Tailwind CSS 4
+- **Theming**: CSS variables + `next-themes`
+- **Components**: shadcn/ui (locally managed)
 
-#### 国际化
+#### Internationalization
 
-- **框架**：react-i18next
-- **上下文**：TranslationContext
-- **语言**：zh / en / zh-tw
+- **Framework**: react-i18next
+- **Context**: TranslationContext
+- **Languages**: zh / en / zh-tw
 
 ---
 
-## 📚 参考资料
+## 📚 Resources
 
-| 资源 | 链接 |
+| Resource | Link |
 |:-----|:-----|
-| Hermes Agent 官方指南 | [点击访问](https://hermes.xaapi.ai/guide/introduction) |
-| Hermes Skills 市场 | [点击访问](https://hermes-agent.nousresearch.com/docs/skills) |
-| Hermes 管理面板 | [本地访问](http://127.0.0.1:9119/) |
-| Tauri 文档 | [点击访问](https://tauri.app/zh-cn/v2/) |
-| React 文档 | [点击访问](https://react.dev/) |
-| shadcn/ui 组件库 | [点击访问](https://ui.shadcn.com/) |
-| Tailwind CSS | [点击访问](https://tailwindcss.com/) |
+| Hermes Agent Guide | [View](https://hermes.xaapi.ai/guide/introduction) |
+| Hermes Skills Marketplace | [View](https://hermes-agent.nousresearch.com/docs/skills) |
+| Hermes Admin Panel | [Local](http://127.0.0.1:9119/) |
+| Tauri Docs | [View](https://tauri.app/zh-cn/v2/) |
+| React Docs | [View](https://react.dev/) |
+| shadcn/ui | [View](https://ui.shadcn.com/) |
+| Tailwind CSS | [View](https://tailwindcss.com/) |
 
 ---
 
-## ❤️ 致谢
+## ❤️ Acknowledgments
 
-- [Hermes Agent](https://github.com/) - 强大的本地 AI Agent
-- [Tauri](https://tauri.app/) - 下一代轻量级桌面应用框架
-- [shadcn/ui](https://ui.shadcn.com/) - 精美的 React 组件库
-- [xterm.js](https://xtermjs.org/) - 强大的终端模拟器
-- [Framer Motion](https://www.framer.com/) - 丝滑的动效库
+- [Hermes Agent](https://github.com/) - The powerful local AI Agent
+- [Tauri](https://tauri.app/) - The next-gen lightweight desktop framework
+- [shadcn/ui](https://ui.shadcn.com/) - The beautiful React component library
+- [xterm.js](https://xtermjs.org/) - The capable terminal emulator
+- [Framer Motion](https://www.framer.com/) - The smooth animation library
 
 ---
 
-## 📄 许可证
+## 📄 License
 
-[MIT License](LICENSE) - 自由使用，商用免费
+[MIT License](LICENSE) - Free to use, commercial-friendly
 
 ---
 
 <div align="center">
 
-**如果这个项目对你有帮助，请给个 ⭐ Star！**
+**If you find this project useful, please give it a ⭐ Star!**
 
-🐛 遇到问题？→ [提交 Issue](https://gitee.com/8187735/Hermes-Slate-Desk/issues)
+🐛 Found a bug? → [Open an Issue](https://gitee.com/8187735/Hermes-Slate-Desk/issues)
 
-💡 有建议？→ [参与讨论](https://gitee.com/8187735/Hermes-Slate-Desk/discussions)
+💡 Have a suggestion? → [Start a Discussion](https://gitee.com/8187735/Hermes-Slate-Desk/discussions)
 
-🎉 想贡献？→ [提交 PR](https://gitee.com/8187735/Hermes-Slate-Desk/pulls)
+🎉 Want to contribute? → [Submit a PR](https://gitee.com/8187735/Hermes-Slate-Desk/pulls)
 
 ---
 
-*最后更新：2026-05-18 | 项目状态：🟢 活跃开发中*
+*Last updated: 2026-05-18 | Status: 🟢 Active Development*
 
 </div>
