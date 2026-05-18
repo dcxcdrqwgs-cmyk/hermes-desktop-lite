@@ -10,7 +10,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4.2-06B6D4?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
 [![shadcn/ui](https://img.shields.io/badge/shadcn/ui-Local-000000?style=flat-square)](https://ui.shadcn.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-FF6B6B?style=flat-square)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows-808080?style=flat-square&logo=apple)](https://tauri.app/)
+[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-808080?style=flat-square&logo=apple)](https://tauri.app/)
 
 *🤖 基于 Tauri 2 + React 19 构建 | 即开即用的本地 AI 工作站*
 
@@ -213,9 +213,9 @@ xterm.js 集成 + PTY 会话，原生终端体验。
 ```
 macOS ✅（优先支持）
    ↓
-Linux ✅（完整支持）
+Windows ✅（完整支持）
    ↓
-Windows 🔄（后续支持）
+Linux 🔄（后续支持）
 ```
 
 ---
