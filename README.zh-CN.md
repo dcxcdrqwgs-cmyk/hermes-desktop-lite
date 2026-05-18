@@ -468,7 +468,7 @@ hermes-slate-desk/
 
 ## 📄 许可证
 
-[MIT License](LICENSE) - 自由使用，商用免费
+[MIT License](LICENSE)
 
 ---
 
