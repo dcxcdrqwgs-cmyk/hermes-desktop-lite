@@ -22,18 +22,15 @@
 
 ## 📸 应用预览
 
-> ⚠️ **截图待添加** - 请在 `screenshots/` 目录添加以下截图（推荐尺寸：1200×800px）
+| 🏠 首页 | 💬 对话 | 📝 AI 笔记 | ⏰ 定时任务 |
+|:------:|:------:|:------:|:------:|
+| `screenshots/home.png` | `screenshots/chat.png` | `screenshots/notebook.png` | `screenshots/cron.png` |
 
-| 功能模块 | 截图预览 |
-|:------:|:------:|
-| **🏠 首页** | `screenshots/home.png` |
-| **💬 对话** | `screenshots/chat.png` |
-| **📝 AI 笔记** | `screenshots/notebook.png` |
-| **⏰ 定时任务** | `screenshots/cron.png` |
-| **📂 文件管理** | `screenshots/files.png` |
-| **💻 终端** | `screenshots/terminal.png` |
-| **⚙️ Hermes 设置** | `screenshots/hermes-settings.png` |
-| **🔧 应用设置** | `screenshots/settings.png` |
+| 📂 文件管理 | 💻 终端 | ⚙️ Hermes 设置 | 🔧 应用设置 |
+|:------:|:------:|:------:|:------:|
+| `screenshots/files.png` | `screenshots/terminal.png` | `screenshots/hermes-settings.png` | `screenshots/settings.png` |
+
+> 📁 截图目录：`screenshots/` | 推荐尺寸：1200×800px
 
 ---
 
